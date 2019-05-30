@@ -1,47 +1,25 @@
 %A = [ 1.000 0.000 0.000; 5.000 6.000 7.000; 0.000 1.000 0.000];
 
 A = [ 1.000 0.000 0.000; 5.000 9.000 1000.000; 1.000 2.000 0.000];
-
-k = 2;
-
-
 [dim, ~] = size(A);
+
+% hardcoded part starts here
+% k = 2;
+% J = [2 3];
+k = 3;
+J = [3];
 M = eye(dim);
 M(3, 2) = 1;
+% hardcoded part ends here
 
-curr_err = norm(A*M - eye(dim), 'fro')
+[m_hat, pj_sqrs] = iterSingleColumn(A, M, J, k)
 
-E = eye(dim);
-ek = E(:, k);
+% M[J, k] = m_hat
+% curr_err = norm(A*M - eye(dim), 'fro')
 
-J = [2 3];
+% running it for the second time! 
+%J = [2, J]
 
-% init I and J sets
-I = getIfromJ(A, J)
-[~, n2] = size(J)
-[n1, ~] = size(I)
-
-
-
-A_hat = A(I, J);
-[Q, R] = qr(A_hat);
-R_hat = R(1:n2, :);
-ek_hat = ek(I);
-
-c_hat = Q'*ek_hat;
-
-
-m_hat = R_hat\c_hat(1:n2);
-
-r = A(:, J)*m_hat - ek;
-norm_r = norm(r)^2;
-
-pj_sqrs = zeros(dim, 1);
-for j = 1:dim
-    
-    pj_sqrs(j) = norm_r - (r'*A(:, j))^2 / norm(A(:, j))^2;
-    
-end
 
 pj_sqrs
 
