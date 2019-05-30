@@ -7,8 +7,8 @@ function [m_hat, r] = iterSingleColumn(A, M, J, k)
     ek = E(:, k);
 
     % init I and J sets
-    display('I is ')
-    I = getIfromJ(A, J)
+%     display('I is ');
+    I = getIfromJ(A, J);
     [~, n2] = size(J);
     [n1, ~] = size(I);
 
@@ -24,8 +24,8 @@ function [m_hat, r] = iterSingleColumn(A, M, J, k)
     m_hat = R_hat\c_hat(1:n2);
     
     % compute residuals
-    display('residual is ')
-    r = A(:, J)*m_hat - ek
+%     display('residual is ');
+    r = A(:, J)*m_hat - ek;
     
 
 end
