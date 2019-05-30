@@ -15,18 +15,21 @@ M(3, 2) = 1;
 display('error before iter 1:')
 curr_err = norm(A*M - eye(dim), 'fro')
 
-[m_hat, pj_sqrs] = iterSingleColumn(A, M, J, k)
+[m_hat, r] = iterSingleColumn(A, M, J, k)
 
 M(J, k) = m_hat
+
 display('error before iter 2:')
 curr_err = norm(A*M - eye(dim), 'fro')
 % curr_err = norm(A*M - eye(dim), 'fro')
 
 % running it for the second time! 
-[~, idx] = min(pj_sqrs)
-J = [idx, J]
 
-[m_hat, pj_sqrs] = iterSingleColumn(A, M, J, k)
+J_star = updateJ(A, r)
+
+J = union(J, J_star)
+
+[m_hat, r] = iterSingleColumn(A, M, J, k)
 
 M(J, k) = m_hat
 display('error before iter 3:')

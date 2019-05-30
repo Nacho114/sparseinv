@@ -1,4 +1,4 @@
-function [m_hat, pj_sqrs] = iterSingleColumn(A, M, J, k)
+function [m_hat, r] = iterSingleColumn(A, M, J, k)
     
     [dim, ~] = size(A);
     curr_err = norm(A*M - eye(dim), 'fro');
@@ -7,7 +7,8 @@ function [m_hat, pj_sqrs] = iterSingleColumn(A, M, J, k)
     ek = E(:, k);
 
     % init I and J sets
-    I = getIfromJ(A, J);
+    display('I is ')
+    I = getIfromJ(A, J)
     [~, n2] = size(J);
     [n1, ~] = size(I);
 
@@ -23,15 +24,8 @@ function [m_hat, pj_sqrs] = iterSingleColumn(A, M, J, k)
     m_hat = R_hat\c_hat(1:n2);
     
     % compute residuals
-    r = A(:, J)*m_hat - ek;
-    norm_r = norm(r)^2;
+    display('residual is ')
+    r = A(:, J)*m_hat - ek
     
-    % compute decrease by taking more things
-    pj_sqrs = zeros(dim, 1);
-    for j = 1:dim
-
-        pj_sqrs(j) = norm_r - (r'*A(:, j))^2 / norm(A(:, j))^2;
-
-    end
 
 end
