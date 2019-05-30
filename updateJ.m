@@ -1,4 +1,4 @@
-function [J_star] = updateJ(A, r, debug)
+function [J_star] = updateJ(A, r, debug, t)
     
     display(r)
     norm_r = norm(r)^2;
@@ -28,5 +28,9 @@ function [J_star] = updateJ(A, r, debug)
 
     end
     
-    [~, J_star] = min(pj_sqrs);
+    if t == 1
+        [~, J_star] = min(pj_sqrs);
+    else
+        [~, J_star] = mink(pj_sqrs, t);
+    end
     

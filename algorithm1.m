@@ -1,9 +1,12 @@
 %A = [ 1.000 0.000 0.000; 5.000 6.000 7.000; 0.000 1.000 0.000];
 
-A = [ 1.000 0.000 0.000; 5.000 9.000 1000.000; 1.000 2.000 0.000];
+% A = [ 1.000 0.000 0.000; 5.000 9.000 1000.000; 1.000 2.000 0.000];
+A = spconvert(load('../dataset/orsirr_2.mtx'))
+display(size(A))
 [dim, ~] = size(A);
 M = eye(dim);
 iter = 5;
+t=1;
 debug = false;
 for k = 1:dim
     sprintf('------------- Column %d -------------', k)
@@ -37,7 +40,7 @@ for k = 1:dim
         end
         
         %J_star should be a row vector as J is 
-        J_star = updateJ(A, r, debug)';
+        J_star = updateJ(A, r, debug, t)';
         
         if debug
             display(M)
