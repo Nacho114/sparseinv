@@ -1,24 +1,25 @@
-function [J_star] = updateJ(A, r)
+function [J_star] = updateJ(A, r, debug)
     
     display(r)
     norm_r = norm(r)^2;
     eps=1e-10;
-%     display(eps);
     
-    L = find(abs(r)>eps)
+    L = find(abs(r)>eps);
+    if debug
+        display('J_tilda is ')
+        display(A(L, :))
+        display(abs(A(L, :)))
+    end
     
-%     display('J_tilda is ')
-%     display(A(L, :))
-%     display(abs(A(L, :)))
-%     J_tilda = find(sum(abs(A(L, :))~=0, 1))'
+    J_tilda = find(sum(abs(A(L, :))~=0, 1))';
     
-    [dim, ~] = size(A);
-    J_tilda = [1:dim]';
+%     [dim, ~] = size(A);
+%     J_tilda = [1:dim]';
     
     %TODO: remove J from J_tilda
     
     % compute decrement by taking more things
-%     [dim, ~] = size(J_tilda);
+    [dim, ~] = size(J_tilda);
     pj_sqrs = zeros(dim, 1);
     
     for idx = 1:dim

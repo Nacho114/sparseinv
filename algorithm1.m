@@ -4,6 +4,7 @@ A = [ 1.000 0.000 0.000; 5.000 9.000 1000.000; 1.000 2.000 0.000];
 [dim, ~] = size(A);
 M = eye(dim);
 iter = 5;
+debug = false;
 for k = 1:dim
     sprintf('------------- Column %d -------------', k)
     % hardcoded part starts here
@@ -21,13 +22,30 @@ for k = 1:dim
         total_err = norm(rem, 'fro');
         sprintf('Before iter %d: \n total error is %.5f, column error is %.5f', x, total_err, col_err)
         
-        [m_hat, r] = iterSingleColumn(A, M, J, k);
-
+        [m_hat, r] = iterSingleColumn(A, M, J, k, debug);
+        
+        if debug
+            sprintf('debug M')
+            display(M)
+            display(m_hat)
+        end
+        
         M(J, k) = m_hat;
-
-        J_star = updateJ(A, r);
-
-        J = union(J, J_star);
+        
+        if debug
+            display(M)
+        end
+        
+        %J_star should be a row vector as J is 
+        J_star = updateJ(A, r, debug)';
+        
+        if debug
+            display(M)
+            display(J)
+        end
+        
+        J = union(J, J_star)
+        
     end
     
     sprintf('-------------------------------')
