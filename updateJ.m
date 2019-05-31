@@ -31,6 +31,8 @@ function [J_star] = updateJ(A, r, debug, t)
     if t == 1
         [~, J_star] = min(pj_sqrs);
     else
-        [~, J_star] = mink(pj_sqrs, t);
+        [xs, idx] = sort(pj_sqrs);
+        J_star = idx(1:t);
+%         [~, J_star] = mink(pj_sqrs, t);
     end
     
