@@ -1,4 +1,4 @@
-function [J_star] = updateJ(A, J, r, debug, t, withf)
+function [J_star] = updateJ(A, J, r, debug, t, withf, rem_below_avg)
     
 %     display(r)
     norm_r_sq = norm(r)^2;
@@ -28,16 +28,23 @@ function [J_star] = updateJ(A, J, r, debug, t, withf)
     [dimJT, ~] = size(J_tilda); 
     
     % compute decrement by taking more things    
-    
+    sum_pj_sq = 0
     for idx = 1:dimJT
         j = J_tilda(idx);
         pj_sqrs(j) = norm_r_sq - (r'*A(:, j))^2 / norm(A(:, j))^2;
-
+        sum_pj_sq = sum_pj_sq + pj_sqrs(j);
+    end
+    
+    if rem_below_avg
+        avg_pj_sq = sum_pj_sq/dimJT;
+        pj_sqrs(pj_sqrs>avg_pj_sq) = inf;
     end
     
     if t == 1
         [~, J_star] = min(pj_sqrs);
     else
+        t = min(t, sum(pj_sqrs < inf));
+        display(t)
         [xs, idx] = sort(pj_sqrs);
         J_star = idx(1:t);
         %[~, J_star] = mink(pj_sqrs, t);
