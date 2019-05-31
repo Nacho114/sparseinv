@@ -1,6 +1,6 @@
 function [J_star] = updateJ(A, r, debug, t)
     
-    display(r)
+%     display(r)
     norm_r = norm(r)^2;
     eps=1e-10;
     
@@ -11,15 +11,15 @@ function [J_star] = updateJ(A, r, debug, t)
         display(abs(A(L, :)))
     end
     
-    J_tilda = find(sum(abs(A(L, :))~=0, 1))';
+%     J_tilda = find(sum(abs(A(L, :))~=0, 1))';
     
-%     [dim, ~] = size(A);
-%     J_tilda = [1:dim]';
+    [dim, ~] = size(A);
+    J_tilda = [1:dim]';
     
     %TODO: remove J from J_tilda
     
     % compute decrement by taking more things
-    [dim, ~] = size(J_tilda);
+%     [dim, ~] = size(J_tilda);
     pj_sqrs = zeros(dim, 1);
     
     for idx = 1:dim
