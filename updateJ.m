@@ -1,8 +1,12 @@
-function [J_star] = updateJ(A, r, debug, t)
+function [J_star] = updateJ(A, r, debug, t, withf)
     
 %     display(r)
-    norm_r = norm(r)^2;
+    norm_r_sq = norm(r)^2;
     eps=1e-10;
+    inf = 1e16;
+    
+    [dimA, ~] = size(A);
+    pj_sqrs = ones(dimA, 1)*inf;
     
     L = find(abs(r)>eps);
     if debug
@@ -11,20 +15,21 @@ function [J_star] = updateJ(A, r, debug, t)
         display(abs(A(L, :)))
     end
     
-%     J_tilda = find(sum(abs(A(L, :))~=0, 1))';
+    if withf
+        %TODO: remove J from J_tilda
+        J_tilda = find(sum(abs(A(L, :))~=0, 1))';
+        % for example, J_tilda = [2, 3]
+    else
+        J_tilda = [1:dimA]';
+    end
     
-    [dim, ~] = size(A);
-    J_tilda = [1:dim]';
+    [dimJT, ~] = size(J_tilda); 
     
-    %TODO: remove J from J_tilda
+    % compute decrement by taking more things    
     
-    % compute decrement by taking more things
-%     [dim, ~] = size(J_tilda);
-    pj_sqrs = zeros(dim, 1);
-    
-    for idx = 1:dim
+    for idx = 1:dimJT
         j = J_tilda(idx);
-        pj_sqrs(j) = norm_r - (r'*A(:, j))^2 / norm(A(:, j))^2;
+        pj_sqrs(j) = norm_r_sq - (r'*A(:, j))^2 / norm(A(:, j))^2;
 
     end
     
