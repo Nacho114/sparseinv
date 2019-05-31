@@ -1,4 +1,4 @@
-function [J_star] = updateJ(A, r, debug, t, withf)
+function [J_star] = updateJ(A, J, r, debug, t, withf)
     
 %     display(r)
     norm_r_sq = norm(r)^2;
@@ -16,9 +16,11 @@ function [J_star] = updateJ(A, r, debug, t, withf)
     end
     
     if withf
-        %TODO: remove J from J_tilda
+        % for example, J_tilda = [2, 3, 4], J=[2,3]
         J_tilda = find(sum(abs(A(L, :))~=0, 1))';
-        % for example, J_tilda = [2, 3]
+        % remove J from J_tilda
+        J_tilda = setdiff(J_tilda, J);
+        
     else
         J_tilda = [1:dimA]';
     end
@@ -38,6 +40,6 @@ function [J_star] = updateJ(A, r, debug, t, withf)
     else
         [xs, idx] = sort(pj_sqrs);
         J_star = idx(1:t);
-%         [~, J_star] = mink(pj_sqrs, t);
+        %[~, J_star] = mink(pj_sqrs, t);
     end
     

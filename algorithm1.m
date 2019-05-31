@@ -11,9 +11,9 @@ maxiter=5;
 t=1;
 debug = false;
 parpool(2);
-err_thresh = 0.6;
+err_thresh = -1;
 Id = eye(dim);
-withf=false;
+withf=true;
 
 tic
 parfor k = 1:dim
@@ -36,10 +36,10 @@ parfor k = 1:dim
         
         [m_hat, r] = iterSingleColumn(A, J, k, debug);
         
-%         if norm(r) < err_thresh
-%             sprintf('exited at iteration %d for column %d, norm is %.5f ', x, k, norm(r))
-%             break
-%         end
+        if norm(r) < err_thresh
+            sprintf('exited at iteration %d for column %d, norm is %.5f ', x, k, norm(r))
+            break
+        end
         
         if debug
             sprintf('debug M')
@@ -55,7 +55,7 @@ parfor k = 1:dim
 %         f = @() updateJ(A, r, debug, t);
 %         timeit(f)
         %J_star should be a row vector as J is 
-        J_star = updateJ(A, r, debug, t, withf)';
+        J_star = updateJ(A, J, r, debug, t, withf)';
         
         if debug
 %             display(M)

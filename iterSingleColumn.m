@@ -15,7 +15,7 @@ function [m_hat, r] = iterSingleColumn(A, J, k, debug)
     % Compute QR of A_hat
     A_hat = A(I, J);
     [Q, R] = qr(A_hat);
-    R_hat = R(1:n2, :)
+    R_hat = R(1:n2, :);
     ek_hat = ek(I);
     
     % update m_hat by the solution of least squares 
