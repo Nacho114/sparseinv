@@ -10,7 +10,6 @@ function [J_star] = updateJ(A, J, r, debug, t, withf, rem_below_avg)
     
     L = find(abs(r)>eps);
     if debug
-        display('J_tilda is ')
         display(A(L, :))
         display(abs(A(L, :)))
     end
@@ -45,7 +44,7 @@ function [J_star] = updateJ(A, J, r, debug, t, withf, rem_below_avg)
     else
         t = min(t, sum(pj_sqrs < inf));
         sprintf('t is %d', t)
-        [xs, idx] = sort(pj_sqrs);
+        [~, idx] = sort(pj_sqrs);
         J_star = idx(1:t);
         %[~, J_star] = mink(pj_sqrs, t);
     end

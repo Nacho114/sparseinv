@@ -1,7 +1,6 @@
 function [m_hat, r] = iterSingleColumn(A, J, k, debug)
     
     [dim, ~] = size(A);
-%     curr_err = norm(A*M(:, k) - eye(dim), 'fro');
 
     E = eye(dim);
     ek = E(:, k);
