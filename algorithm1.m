@@ -11,7 +11,7 @@ maxiter=50;
 t=5;
 debug = false;
 parpool(2);
-err_thresh = 0.6;
+err_thresh = 0.5;
 Id = eye(dim);
 withf=true;
 rem_below_avg = true;
@@ -35,11 +35,7 @@ parfor k = 1:dim
         sprintf('Before iter %d: column error is %.5f \n', x, col_err)
         
         [m_hat, r] = iterSingleColumn(A, J, k, debug);
-        
-%         if norm(r) < err_thresh
-%             sprintf('exited at iteration %d for column %d, norm is %.5f ', x, k, norm(r))
-%             break
-%         end
+%         display(r)
         
         if debug
             sprintf('debug M')
@@ -49,6 +45,12 @@ parfor k = 1:dim
         
         m_final(J) = m_hat;
         
+        if norm(r) < err_thresh
+            sprintf('exited at iteration %d for column %d, norm is %.5f ', x, k, norm(r))
+            break
+        end
+
+
         if debug
 %             display(M)
         end
@@ -64,12 +66,13 @@ parfor k = 1:dim
         
         J = union(J, J_star);
         
-        r_til = A*m_final - Id(:, k);
-        
-        if norm(r_til) < err_thresh
-            sprintf('exited at iteration %d for column %d, norm of r_til is %.5f while norm of r was %.5f', x, k, norm(r_til), norm(r))
-            break
-        end
+%         r_til = A*m_final - Id(:, k);
+%         sprintf('rtil is ')
+%         display(r_til')
+%         if norm(r_til) < err_thresh
+%             sprintf('exited at iteration %d for column %d, norm of r_til is %.5f while norm of r was %.5f', x, k, norm(r_til), norm(r))
+%             break
+%         end
         
     end
     
