@@ -10,6 +10,9 @@
 \usepackage{tcolorbox}
 \usepackage{mathrsfs}
 
+\usepackage{amsthm}
+
+
 %%% hacks
 \setlength\parindent{0pt}
 \newcommand{\horrule}[1]{\rule{\linewidth}{#1}}
@@ -43,108 +46,117 @@
 \newtheorem{theorem}{Theorem}
 \newtheorem{definition}{Definition}
 
+%\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}[theorem]
+%\newtheorem{lemma}[theorem]{Lemma}
+
+
 %%% title
-\title{Sparse Approximate Inverse Preconditioner}
-\subtitle{Computational Linear Algebra}
+\title{Linear fitting and the Huber loss}
+\subtitle{Convex Optimization}
 \author{Sidak Pal Singh}
 
 \begin{document}
-\maketitle
-%$$\textbf{Disclaimer: } This project follows closely a project given in a different class covering convex optimization.
-
-\section{Abstract}
-
-In this project, the aim is to construct a sparse preconditioner M for a given sparse matrix A. More specifially, we look for a right preconditioner M such that $\|I-A M\|_{F}$ is minimized. \\
-One of the most successful general-purpose methods for achiev- ing this tasks is SPAI by Grote and Huckle [3]. Improvements to the method from [3] have been described in [2]. The paper [1] provides an overview of these and similar methods.
-
-
-\section{Introduction}
-
-intro of sparse inverse problem
-
-\newpage
-
-\section{SPAI}
-
-Goal
-
-\begin{equation}
-\|A M-I\|_{F}^{2}=\sum_{k=1}^{n}\left\|(A M-I) e_{k}\right\|_{2}^{2}
-\end{equation}
-
-i.e. n independent least squares
-
-
-\begin{equation}
-\min _{m_{k}}\left\|A m_{k}-e_{k}\right\|_{2}, \quad k=1, \ldots, n
-\end{equation}
-
-
-How to compute sparsity structure 
-
-
-
-We denote the reduced vector of unknowns  $m_{k}(\mathcal{J}) $ by  $\hat{m}_{k}$, define here also %\mathcal{J}, ...
-
-Given sparsity structure we can focus on the following problem
-
-\begin{equation}
-\min _{\hat{m}_{k}}\left\|\hat{A} \hat{m}_{k}-\hat{e}_{k}\right\|_{2}
-\end{equation}
-
-\begin{equation}
-\hat{A}=Q\left(\begin{array}{l}{R} \\ {0}\end{array}\right)
-\end{equation}
-
-let \(\hat{c}=Q^{T} \hat{e}_{k}\), then the solution to (3) is 
-
-\begin{equation}
-\hat{m}_{k}=R^{-1} \hat{c}\left(1 : n_{2}\right)
-\end{equation}
-
-Solve (5) for every column of M to get an approximate inverse. The next 
-step is to increase the sparsity structure to improve upon the previous solution.
-
-The idea is to add indices that will lead to best reduction in error. We recall that the current error is \(\|A M-I\|_{F},\), in other words to \(\left\|A m_{k}-e_{k}\right\|_{2}\) for each \(k=1, \ldots, n .\) We recall that \(m_{k}\) is the optimal solution of the least squares problem (4), and we denote its residual by
-
-\begin{equation}
-r=A( ., \mathcal{J}) \hat{m}_{k}-e_{k}
-\end{equation}
-
-We note that if r = 0, then we are done with the column (i.e. \(m_{k}\) is equal to the kth column of $A^{-1}$
-
-
-\begin{equation}
-\tilde{\mathcal{J}}=\bigcup_{\ell \in \mathcal{L}} \mathcal{N}_{\ell}
-\end{equation}
-
-\begin{equation}
-\tilde{\mathcal{J}}=\bigcup_{\ell \in \mathcal{L}} \mathcal{N}_{\ell}
-\end{equation}
-
-\begin{equation}
-\min _{\mu_{j}}\left\|r+\mu_{j} A e_{j}\right\|_{2}
-\end{equation}
-
-\begin{equation}
-\mu_{j}=-\frac{r^{T} A e_{j}}{\left\|A e_{j}\right\|_{2}^{2}}
-\end{equation}
-
-\begin{equation}
-\rho_{j}^{2}=\|r\|_{2}^{2}-\frac{\left(r^{T} A e_{j}\right)^{2}}{\left\|A e_{j}\right\|_{2}^{2}}
-\end{equation}
-
-\begin{equation}
-0=r(\mathcal{L})^{T} A(\mathcal{L}, \tilde{\mathcal{J}})=r(\mathcal{L})^{T} A(\mathcal{L}, \mathcal{J} \cup \tilde{\mathcal{J}})
-\end{equation}
-
-\newpage
+	\maketitle
+	%\textbf{Disclaimer: } This project follows closely a project given in a different class covering convex optimization.
+	
+	\section{Abstract}
+	
+	In this project, the aim is to construct a sparse preconditioner M for a given sparse matrix A. More specifially, we look for a right preconditioner M such that $\|I-A M\|_{F}$ is minimized. \\
+	One of the most successful general-purpose methods for achiev- ing this tasks is SPAI by Grote and Huckle [3]. Improvements to the method from [3] have been described in [2]. The paper [1] provides an overview of these and similar methods.
+	
+	
+	\section{Introduction}
+	
+	intro of sparse inverse problem
+	
+	\newpage
+	
+	\section{SPAI}
+	
+	Goal
+	
+	\begin{equation}
+	\|A M-I\|_{F}^{2}=\sum_{k=1}^{n}\left\|(A M-I) e_{k}\right\|_{2}^{2}
+	\end{equation}
+	
+	i.e. n independent least squares
+	
+	
+	\begin{equation}
+	\min _{m_{k}}\left\|A m_{k}-e_{k}\right\|_{2}, \quad k=1, \ldots, n
+	\end{equation}
+	
+	
+	How to compute sparsity structure 
+	
+	Now let \(\mathcal{J}\) be the set of indices \(j\) such that \(m_{k}(j) \neq 0\) We denote the reduced vector of unknowns \(m_{k}(\mathcal{J})\) by \(\hat{m}_{k} .\) Next, let \(\mathcal{I}\) be the set of
+	indices \(i\) such that \(A(i, \mathcal{J})\) is not identically zero. This enables us to eliminate all zero rows in the submatrix \(A( ., \mathcal{J}) .\) We denote the resulting submatrix \(A(\mathcal{I}, \mathcal{J})\) by by
+	\(\hat{A}\) . Similarly, we define \(\hat{e}_{k}=e_{k}(\mathcal{I}) .\) If we now set \(n_{1}=|\mathcal{I}|\) and \(n_{2}=|\mathcal{J}|,\) we see that
+	solving \((4)\) for \(m_{k}\) is equivalent to solving
+	
+	\begin{equation}
+	\min _{\hat{m}_{k}}\left\|\hat{A} \hat{m}_{k}-\hat{e}_{k}\right\|_{2}
+	\end{equation}
+	
+	
+	
+	\begin{equation}
+	\hat{A}=Q\left(\begin{array}{l}{R} \\ {0}\end{array}\right)
+	\end{equation}
+	
+	where \(R\) is a nonsingular upper triangular \(n_{2} \times n_{2}\) matrix. If we let \(\hat{c}=Q^{T} \hat{e}_{k},\) the
+	solution of  is
+	
+	\begin{equation}
+	\hat{m}_{k}=R^{-1} \hat{c}\left(1 : n_{2}\right)
+	\end{equation}
+	
+	Solve (5) for every column of M to get an approximate inverse. The next 
+	step is to increase the sparsity structure to improve upon the previous solution.
+	
+	The idea is to add indices that will lead to best reduction in error. We recall that the current error is \(\|A M-I\|_{F},\), in other words to \(\left\|A m_{k}-e_{k}\right\|_{2}\) for each \(k=1, \ldots, n .\) We recall that \(m_{k}\) is the optimal solution of the least squares problem (4), and we denote its residual by
+	
+	\begin{equation}
+	r=A( ., \mathcal{J}) \hat{m}_{k}-e_{k}
+	\end{equation}
+	
+	must be included in \(\mathcal{L}\) since \(r(k)\) is then equal to \(-1 .\) To every \(\ell \in \mathcal{L}\) corresponds an
+	index set \(\mathcal{N}_{\ell},\) which consists of the indices of the nonzero elements of \(A(\ell, .)\) that are
+	
+	
+	\begin{equation}
+	\tilde{\mathcal{J}}=\bigcup_{\ell \in \mathcal{L}} \mathcal{N}_{\ell}
+	\end{equation}
+	
+	\begin{equation}
+	\tilde{\mathcal{J}}=\bigcup_{\ell \in \mathcal{L}} \mathcal{N}_{\ell}
+	\end{equation}
+	
+	\begin{equation}
+	\min _{\mu_{j}}\left\|r+\mu_{j} A e_{j}\right\|_{2}
+	\end{equation}
+	
+	\begin{equation}
+	\mu_{j}=-\frac{r^{T} A e_{j}}{\left\|A e_{j}\right\|_{2}^{2}}
+	\end{equation}
+	
+	\begin{equation}
+	\rho_{j}^{2}=\|r\|_{2}^{2}-\frac{\left(r^{T} A e_{j}\right)^{2}}{\left\|A e_{j}\right\|_{2}^{2}}
+	\end{equation}
+	
+	\begin{equation}
+	0=r(\mathcal{L})^{T} A(\mathcal{L}, \tilde{\mathcal{J}})=r(\mathcal{L})^{T} A(\mathcal{L}, \mathcal{J} \cup \tilde{\mathcal{J}})
+	\end{equation}
+	
+	\newpage
 
 \section{Theorem 3.3}
 
-We now derive bounds for the singular values and the condition number of AM.
-
-THEOREM 3.3. The singular values of \(A M\) are clustered at 1 and lie inside the
+The statement of this theorem is as follows: 
+%We now derive bounds for the singular values and the condition number of AM.
+\begin{theorem}
+The singular values of \(A M\) are clustered at 1 and lie inside the
 interval \([1-\delta, 1+\delta],\) with \(\delta=\sqrt{n} \varepsilon(2+\sqrt{n} \varepsilon) .\) Furthermore, if \(\delta<1,\) then the
 condition number of \(A M\) satisfies
 
@@ -153,7 +165,13 @@ condition number of \(A M\) satisfies
 \end{equation}
 
 
-LEMMA \(1.\) Let \(p=\max _{1 \leq k \leq n}\left\{\text { number of nonzero elements of } r_{k}\right\} .\) Then
+\end{theorem}
+
+\paragraph{Remark.} We believe that there is a minor typo in the statement of the original theorem as singular values lie inside the interval  \([\sqrt{1-\delta}, \sqrt{1+\delta}],\)
+
+
+\begin{lemma}
+Let \(p=\max _{1 \leq k \leq n}\left\{\text { number of nonzero elements of } r_{k}\right\} .\) Then
 \begin{equation}
 \|A M-I\|_{F} \leq \sqrt{n} \varepsilon
 \end{equation}
@@ -165,7 +183,9 @@ LEMMA \(1.\) Let \(p=\max _{1 \leq k \leq n}\left\{\text { number of nonzero ele
 \begin{equation}
 \|A M-I\|_{1} \leq \sqrt{p} \varepsilon
 \end{equation}
-Proof:
+\end{lemma}
+
+\begin{proof}
 
 \begin{equation}
 \|A M-I\|_{F}^{2}=\sum_{k=1}^{n}\left\|(A M-I) e_{k}\right\|_{2}^{2} \leq \sum_{k=1}^{n} \varepsilon^{2}=n \varepsilon^{2}
@@ -174,10 +194,18 @@ Proof:
 \begin{equation}
 \begin{array}{l}{\|A M-I\|_{2}=\max _{\|x\|_{2}=1}\|(A M-I) x\|_{2}} \\ {=\max _{\|x\|_{2}=1}\left\|\sum_{k=1}^{n} x_{k}(A M-I) e_{k}\right\|_{2} \leq \max _{\|x\|_{2}=1}\|x\|_{1} \varepsilon \leq \sqrt{n} \varepsilon}\end{array}
 \end{equation}
+\end{proof}
 
-
+\begin{lemma}
+	
 Gershgorin's Theorem \\
 
+\begin{equation}
+D_{i}=\left\{z \in \mathbb{C} \, | \, | z-a_{i i} | \leq R_{i}\right\}, \text{where} \; R_{i}=\sum_{j \neq i}\, \left|a_{i j}\right|
+\end{equation}
+
+Corollary: The eigenvalues of A must also lie within the Gershgorin discs $C_j$ corresponding to the columns of A. \\
+\end{lemma}
 
 Lemma 2:
 The eigenvalues $\lambda_k$ of $AM$ are clustered at 1 and lie inside a circle of radius $\sqrt{p} \varepsilon$
