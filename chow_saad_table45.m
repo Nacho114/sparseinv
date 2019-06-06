@@ -1,15 +1,23 @@
+% Code to generate table 4.5 of Chow Saad
 
-A = spconvert(load('../dataset/sherman1.mtx'));
+% seed
+% rng(1)
 
-[dim, ~] = size(A);
+path = "../dataset/";
+datasets = ["sherman1" "sherman3" "saylr3"];
+ext = ".mtx";
 
-
-max_iter = 1;
-eps = 1e-8;
-debug = false;
-outer_max_iter_list = [1, 2, 3, 4, 5];
+% general param
+eps = 1e-8; % to prevent nan, stabalize normalisation
+outer_max_iters = [1 2 3 4 5];
 lfil = 10;
+alpha = 1;
+
+inner_iter_mr = 1;
+normalize=true;
+
 use_par = true;
+debug = false;
 
 % set up parallel
 if use_par
@@ -19,34 +27,79 @@ else
     num_workers = 0;
 end
 
-% info
-relres_list = [];
-iter_list = [];
-
-
-for max_outer_iter = outer_max_iter_list
-    M = eye(dim);
-    Mfinal = M;
-    M_ = M;
-    A_ = A;
-
-    for s = 1:max_outer_iter
-        A_ = A_*Mfinal;
-        M_ = M_ * Mfinal;
-        [Mfinal] = mr(A_, E, num_workers, max_iter, eps, lfil, debug);
-
-        display(norm(A*M_ - eye(dim), 'fro'))
-    end
+all_iter = zeros(3, 5);
+all_relres = zeros(3, 5);
+idx = 1;
+for dataset = datasets
     
-    x_true = ones(dim, 1);
-    b = A*x_true;
-    [x,flag,relres,iter] = gmres(A, b);
-    relres_list = [relres_list relres];
-    iter_list = [iter_list iter];
+    A = spconvert(load(path+dataset+ext));
+    [dim, ~] = size(A);
 
+    if normalize
+        display(cond(A))
+        col_norms = sqrt(diag(A'*A))' + 1e-8;
+        A = A ./ col_norms;
+        A_tmp = A;
+        display(cond(A))
+    end
+
+    for outer_max_iter = outer_max_iters
+
+
+        A_ = A;
+        Minit = alpha * A_'; 
+
+        for s = 1:outer_max_iter
+            % get a preconditioner for current A_ from MR
+
+            [M] = mr(A_, Minit, num_workers, inner_iter_mr, eps, lfil, debug);
+
+            Minit = M;
+            Mfinal = M;
+            
+        end
+
+        x_true = ones(dim, 1);
+        b = A*x_true;
+        % run gmres(20)
+        gmres_max_iter = 500;
+        gmres_tol = 1e-5;
+        gmres_restarts = 20;
+        [x_star, flag, relres, iter] = gmres(A*Mfinal, b, gmres_restarts, gmres_tol, gmres_max_iter);
+        x = Mfinal * x_star;
+        
+        all_iter(idx, outer_max_iter) = iter(1) * iter(2);
+        all_relres(idx, outer_max_iter) = relres;
+        
+    end
+    idx = idx + 1;
 end
 
+fileID = fopen('chow_saad_table45_result.txt', 'w');
 
+fprintf(fileID, 'iter\n');
+
+for idx = 1:3
+    curr_iter = all_iter(idx, :);
+    fprintf(fileID, '%s ', datasets(idx));
+    if idx == 3
+        fprintf(fileID, '  ');
+    end
+    fprintf(fileID, '%d ', curr_iter');
+    fprintf(fileID, '\n');
+end
+
+fprintf(fileID, 'relres\n');
+
+for idx = 1:3
+    curr_iter = all_relres(idx, :);
+    fprintf(fileID, '%s ', datasets(idx));
+    if idx == 3
+        fprintf(fileID, '  ');
+    end
+    fprintf(fileID, '%d ', curr_iter');
+    fprintf(fileID, '\n');
+end
 
 poolobj = gcp('nocreate');
 delete(poolobj);
