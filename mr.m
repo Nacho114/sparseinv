@@ -40,7 +40,7 @@ Mfinal = M;
                 % get score
                 pj = -2 * mj .* (A'* rj) + mj.^2;
                 % sort by score
-                [~,I] = sort(pj, 'descend');
+                [~,I] = sort(abs(pj), 'descend');
                 % keep topk items, and set rest to zero
                 mj_ = zeros(size(mj));
                 topk = I(1:lfil);

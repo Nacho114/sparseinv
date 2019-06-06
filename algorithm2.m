@@ -15,8 +15,9 @@ normalize=true;
 eps = 1e-8;
 debug = false;
 outer_max_iter = 1;
-lfil = -1;
+lfil = 10;
 use_par = true;
+alpha=1;
 
 % set up parallel
 if use_par
@@ -42,7 +43,13 @@ sprintf('before preconditioning, error is %.5f', norm(A*Mfinal - eye(dim), 'fro'
 
 for s = 1:outer_max_iter
     % get a preconditioner for current A_ from MR
-    [M] = mr(A_, eye(dim), num_workers, inner_iter_mr, eps, lfil, debug);
+    if normalize
+        Minit = alpha * A_'; 
+    else
+        Minit = eye(dim);    
+    end
+    
+    [M] = mr(A_, Minit, num_workers, inner_iter_mr, eps, lfil, debug);
     
     % update A and Mfinal for restarts
     A_ = A_*M;
