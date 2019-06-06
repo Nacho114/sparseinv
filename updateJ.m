@@ -43,7 +43,7 @@ function [J_star] = updateJ(A, J, r, debug, t, withf, rem_below_avg)
         [~, J_star] = min(pj_sqrs);
     else
         t = min(t, sum(pj_sqrs < inf));
-        sprintf('t is %d', t)
+%         sprintf('t is %d', t)
         [~, idx] = sort(pj_sqrs);
         J_star = idx(1:t);
         %[~, J_star] = mink(pj_sqrs, t);

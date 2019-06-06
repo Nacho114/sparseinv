@@ -1,4 +1,4 @@
-function [Mfinal] = spai(A, M, t, use_par, err_thresh, maxiter, debug)
+function [Mfinal] = spai(A, M, t, num_workers, err_thresh, maxiter, debug)
 
 % Parameters
 
@@ -7,13 +7,6 @@ rem_below_avg = true;
 
 [dim, ~] = size(A);
 
-% set up parallel
-if use_par
-    num_workers = 2;
-    parpool(num_workers);
-else
-    num_workers = 0;
-end
 
 parfor (k = 1:dim, num_workers)
 
@@ -45,6 +38,3 @@ parfor (k = 1:dim, num_workers)
 end
 
 Mfinal = M;
-
-poolobj = gcp('nocreate');
-delete(poolobj);
