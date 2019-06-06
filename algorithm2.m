@@ -14,7 +14,7 @@ normalize=true;
 % prevents nan
 eps = 1e-8;
 debug = false;
-outer_max_iter = 1;
+outer_max_iter = 5;
 lfil = 10;
 use_par = true;
 alpha=1;
@@ -35,26 +35,34 @@ if normalize
     display(cond(A))
 end
 
-% intialize M_final
-Mfinal = eye(dim);
-A_ = A;
 
+A_ = A;
+% intialize M_final
+% if normalize
+%     Mfinal = A_';
+% else
+Mfinal = eye(dim);
+% end
+
+if normalize
+    Minit = alpha * A_'; 
+else
+    Minit = eye(dim);    
+end
+    
 sprintf('before preconditioning, error is %.5f', norm(A*Mfinal - eye(dim), 'fro'))
 
 for s = 1:outer_max_iter
     % get a preconditioner for current A_ from MR
-    if normalize
-        Minit = alpha * A_'; 
-    else
-        Minit = eye(dim);    
-    end
+    
     
     [M] = mr(A_, Minit, num_workers, inner_iter_mr, eps, lfil, debug);
     
     % update A and Mfinal for restarts
-    A_ = A_*M;
-    Mfinal = Mfinal * M;
-    
+%     A_ = A_*M;
+%     Mfinal = Mfinal * M;
+    Minit = M;
+    Mfinal  = M;
     sprintf('after outer iteration %d, error is %.5f', s, norm(A*Mfinal - eye(dim), 'fro'))
 end
 
