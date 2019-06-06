@@ -47,13 +47,17 @@
 \newtheorem{definition}{Definition}
 
 %\newtheorem{theorem}{Theorem}
-\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{corollary}{Corollary}
 %\newtheorem{lemma}[theorem]{Lemma}
 
 
+\newcommand{\dk}{g_{kk}} % D_kk
+\newcommand{\dktil}{\tilde{g}_{kk}} % Dtil_kk
+
+
 %%% title
-\title{Linear fitting and the Huber loss}
-\subtitle{Convex Optimization}
+\title{Sparse Approximate Inverse Preconditioner}
+\subtitle{Computational Linear Algebra}
 \author{Sidak Pal Singh}
 
 \begin{document}
@@ -167,21 +171,21 @@ condition number of \(A M\) satisfies
 
 \end{theorem}
 
-\paragraph{Remark.} We believe that there is a minor typo in the statement of the original theorem as singular values lie inside the interval  \([\sqrt{1-\delta}, \sqrt{1+\delta}],\)
+\paragraph{Remark.} We believe that there is a minor typo in the statement of the original theorem as singular values lie inside the interval  \([\sqrt{1-\delta}, \sqrt{1+\delta}],\), which is evident from the nature of the bound on the condition number. 
 
 
 \begin{lemma}
 Let \(p=\max _{1 \leq k \leq n}\left\{\text { number of nonzero elements of } r_{k}\right\} .\) Then
 \begin{equation}
-\|A M-I\|_{F} \leq \sqrt{n} \varepsilon
+\|A M-I\|_{F} \leq \sqrt{n} \varepsilon \label{lem1a}
 \end{equation}
 
 \begin{equation}
-\|A M-I\|_{2} \leq \sqrt{n} \varepsilon
+\|A M-I\|_{2} \leq \sqrt{n} \varepsilon \label{lem1b}
 \end{equation}
 
 \begin{equation}
-\|A M-I\|_{1} \leq \sqrt{p} \varepsilon
+\|A M-I\|_{1} \leq \sqrt{p} \varepsilon \label{lem1c}
 \end{equation}
 \end{lemma}
 
@@ -191,25 +195,38 @@ Let \(p=\max _{1 \leq k \leq n}\left\{\text { number of nonzero elements of } r_
 \|A M-I\|_{F}^{2}=\sum_{k=1}^{n}\left\|(A M-I) e_{k}\right\|_{2}^{2} \leq \sum_{k=1}^{n} \varepsilon^{2}=n \varepsilon^{2}
 \end{equation}
 
-\begin{equation}
-\begin{array}{l}{\|A M-I\|_{2}=\max _{\|x\|_{2}=1}\|(A M-I) x\|_{2}} \\ {=\max _{\|x\|_{2}=1}\left\|\sum_{k=1}^{n} x_{k}(A M-I) e_{k}\right\|_{2} \leq \max _{\|x\|_{2}=1}\|x\|_{1} \varepsilon \leq \sqrt{n} \varepsilon}\end{array}
-\end{equation}
+\begin{align}
+\|A M-I\|_{2} &=\max _{\|x\|_{2}=1}\|(A M-I) x\|_{2} =\max _{\|x\|_{2}=1}\left\|\sum_{k=1}^{n} x_{k}(A M-I) e_{k}\right\|_{2} \\
+&\leq \max _{\|x\|_{2}=1}\|x\|_{1} \varepsilon \leq \sqrt{n} \varepsilon
+\end{align}
+
+\begin{align}
+\|A M-I\|_{1} &\overset{\text{def}}{=}\max_{1 \leq k \leq n}\left\|A m_k - e_k\right\|_{1} \label{l1matrix} \\
+&\leq \sqrt{p} \max_{1 \leq k \leq n}\left\|A m_k - e_k\right\|_{2} 
+\end{align}
+
+
 \end{proof}
 
 \begin{lemma}
 	
-Gershgorin's Theorem \\
-
-\begin{equation}
+Gershgorin's Theorem
+%Let A be an n x n matrix 
+\begin{equation}\label{gers1}
 D_{i}=\left\{z \in \mathbb{C} \, | \, | z-a_{i i} | \leq R_{i}\right\}, \text{where} \; R_{i}=\sum_{j \neq i}\, \left|a_{i j}\right|
 \end{equation}
 
 Corollary: The eigenvalues of A must also lie within the Gershgorin discs $C_j$ corresponding to the columns of A. \\
+
+
 \end{lemma}
 
-Lemma 2:
+\begin{lemma}
 The eigenvalues $\lambda_k$ of $AM$ are clustered at 1 and lie inside a circle of radius $\sqrt{p} \varepsilon$
+\end{lemma}
 
+\begin{proof}
+	
 Let $Q R Q^{T}$ be a Schur decomposition of $A M-I$. Then:
 
 \begin{equation}
@@ -219,14 +236,37 @@ Let $Q R Q^{T}$ be a Schur decomposition of $A M-I$. Then:
 \begin{equation}
 \frac{1}{n} \sum_{k=1}^{n}\left|1-\lambda_{k}\right|^{2} \leq \varepsilon^{2}
 \end{equation}
-\\
+This implies that the eigenvalues are clustered around 1. The part about them lying inside a circle is shown ahead. Let's denote the matrix $A M$ by $G$ and $A M - I$ by $\tilde{G}$. The individual entries of these matrices are denoted by the respective lowercase letters. Then, we can write
+
+\begin{equation}\label{gers2}
+\left|\lambda_{k} - 1 \right| = \left|\lambda_{k} - \dk  + \dk - 1 \right| \leq \left|\lambda_{k} - \dk \right|  + \left|\dk - 1 \right| %\eq = \left|\lambda_{k} - \dk \right|  + \left|\tilde{g}_{kk}\right|
+\end{equation}
+
+Applying corollary of Lemma 2, i.e. in particular using the Gershgorin's disc $C_k$ corresponding to column $k$, we obtain:
+
+\begin{equation}\label{gers3}
+\left|\lambda_{k} - \dk \right| \leq \sum_{j \neq k}\, \left|g_{j k}\right|
+\end{equation}
+
+Since $ \dktil = \dk - 1 $ and $\tilde{g}_{j k} = g_{j k}$ (for $j\neq k$), from equations \eqref{gers2} and \eqref{gers3}, we have:  
+
+\begin{equation}\label{gers4}
+\left|\lambda_{k} - 1 \right| \leq \sum_{j \neq k}\, \left|\tilde{g}_{j k}\right| + \left|\dktil\right| = \sum_{j }\, \left|\tilde{g}_{j k}\right| = \|A m_k -e_k\|_{1} \overset{\eqref{l1matrix}}{\leq} \|A M-I\|_{1}
+\end{equation}
+
+Thus from the above equation \eqref{gers4} and equation \eqref{lem1c} in lemma 1, we conclude that eigenvalues of the matrix $A M$ satisfy $ \left|\lambda_{k} - 1 \right| \leq \sqrt{p} \varepsilon$ and hence lie inside the required circle.
+\end{proof}
+
 
 %$$
 %\square
 %$$
-Getting back to the proof of the main theorem:
+\vspace{2em}
+\begin{proof}[\textbf{Proof of the main theorem.}] 
 
- Since the singular values of $AM$ are the square roots of the eigenvalues of $A M M^{T} A^{T} $, 
+Now, with these lemma's in place let's get back to proving the original theorem. \\
+
+Since the singular values of $AM$ are the square roots of the eigenvalues of $A M M^{T} A^{T} $, 
 
 \begin{equation}
 \left\|I-A M M^{T} A^{T}\right\|_{2}=\left\|I+(I-A M) M^{T} A^{T}-M^{T} A^{T}\right\|_{2}
@@ -240,4 +280,10 @@ Getting back to the proof of the main theorem:
 \operatorname{cond}_{2}(A M) \leq \sqrt{\frac{1+\delta}{1-\delta}}
 \end{equation}
 
+Finally, applying Lemma 3 to the matrix $ A M M^{T} A^{T} $ instead of $ A M$ we conclude that the singular values are indeed clustered at 1 and lie inside the interval \([\sqrt{1-\delta}, \sqrt{1+\delta}]\).
+\end{proof}
+
+
+%TODO
+% Make it lemma 1.1 and 1.2 and so on! 
 \end{document}
