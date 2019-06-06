@@ -1,3 +1,4 @@
+rng(1);
 A = spconvert(load('../dataset/orsirr_2.mtx'));
 
 [dim, ~] = size(A);
@@ -44,6 +45,10 @@ for i = 1:nb_err_thresh
     
 
 end
+
+fileID = fopen('results_grotehuckle_table1.txt', 'w');
+fprintf(fileID, '%16s %16s %16s\r\n','error_thres (eps)','iterations', 'relres');
+fprintf(fileID, '%16.1f %16.1f %16.e\r\n', [err_thresh_list', bic_conv_iter', bic_relres']');
 
 poolobj = gcp('nocreate');
 delete(poolobj);
