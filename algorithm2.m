@@ -1,5 +1,5 @@
-A = [ 1.000 0.000 0.000; 5.000 6.000 7.000; 0.000 1.000 0.000];
-% A = spconvert(load('../dataset/sherman1.mtx'));
+% A = [ 1.000 0.000 0.000; 5.000 6.000 7.000; 0.000 1.000 0.000];
+A = spconvert(load('../dataset/sherman1.mtx'));
 
 % A = 3*eye(3)
 % A(1, 2) = 2
@@ -8,13 +8,15 @@ A = [ 1.000 0.000 0.000; 5.000 6.000 7.000; 0.000 1.000 0.000];
 
 
 % param
-num_workers = 0;
-max_iter = 1;
+inner_iter_mr = 1;
+normalize=true;
+% below this eps, we don't run an inner iteration 
+% prevents nan
 eps = 1e-8;
 debug = false;
-outer_max_iter = 4;
+outer_max_iter = 1;
 lfil = -1;
-use_par = false;
+use_par = true;
 
 % set up parallel
 if use_par
@@ -22,6 +24,14 @@ if use_par
     parpool(num_workers);
 else
     num_workers = 0;
+end
+
+if normalize
+    display(cond(A))
+    col_norms = sqrt(diag(A'*A))';
+    A = A ./ col_norms;
+    A_tmp = A;
+    display(cond(A))
 end
 
 % intialize M_final
@@ -32,7 +42,7 @@ sprintf('before preconditioning, error is %.5f', norm(A*Mfinal - eye(dim), 'fro'
 
 for s = 1:outer_max_iter
     % get a preconditioner for current A_ from MR
-    [M] = mr(A_, eye(dim), num_workers, max_iter, eps, lfil, debug);
+    [M] = mr(A_, eye(dim), num_workers, inner_iter_mr, eps, lfil, debug);
     
     % update A and Mfinal for restarts
     A_ = A_*M;
@@ -43,9 +53,17 @@ end
 
 sprintf('in the end, after preconditioning, error is %.5f', norm(A*Mfinal - eye(dim), 'fro'))
 
-% x_true = ones(dim, 1);
-% b = A*x_true;
-% [x,flag,relres,iter] = gmres(A, b);
+x_true = ones(dim, 1);
+b = A*x_true;
+% run gmres(20)
+gmres_max_iter = 500;
+gmres_tol = 1e-5;
+gmres_restarts = 20;
+[x_star, flag, relres, iter] = gmres(A*Mfinal, b, gmres_restarts, gmres_tol, gmres_max_iter);
+x = Mfinal * x_star;
+
+display(iter)
+display(relres)
 
 poolobj = gcp('nocreate');
 delete(poolobj);
