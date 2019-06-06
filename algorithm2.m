@@ -32,11 +32,10 @@ A_ = A;
 for s = 1:outer_max_iter
     A_ = A_*Mfinal;
     M_ = M_ * Mfinal;
-    [Mfinal] = minres(A_, Mfinal, num_workers, max_iter, eps, lfil, debug);
+    [Mfinal] = mr(A_, Mfinal, num_workers, max_iter, eps, lfil, debug);
     
     display(norm(A*Mfinal - eye(dim), 'fro'))
 end
-
 
 poolobj = gcp('nocreate');
 delete(poolobj);

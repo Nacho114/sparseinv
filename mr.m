@@ -1,4 +1,4 @@
-function [Mfinal] = minres(A, M, num_workers, maxiter, eps, lfil, debug)    
+function [Mfinal] = mr(A, M, num_workers, maxiter, eps, lfil, debug)    
 
 [dim, ~] = size(A);
 E = eye(dim);
