@@ -6,8 +6,6 @@ A = [ 1.000 0.000 0.000; 5.000 6.000 7.000; 0.000 1.000 0.000];
 
 [dim, ~] = size(A);
 
-% intialize M
-M = eye(dim);
 
 % param
 num_workers = 0;
@@ -26,16 +24,24 @@ else
     num_workers = 0;
 end
 
-Mfinal = M;
-M_ = M;
+% intialize M_final
+Mfinal = eye(dim);
 A_ = A;
+
+sprintf('before preconditioning, error is %.5f\n', s, norm(A*Mfinal - eye(dim), 'fro'))
+
 for s = 1:outer_max_iter
-    A_ = A_*Mfinal;
-    M_ = M_ * Mfinal;
-    [Mfinal] = mr(A_, eye(dim), num_workers, max_iter, eps, lfil, debug);
+    % get a preconditioner for current A_ from MR
+    [M] = mr(A_, eye(dim), num_workers, max_iter, eps, lfil, debug);
     
-    display(norm(A*M_ - eye(dim), 'fro'))
+    % update A and Mfinal for restarts
+    A_ = A_*M;
+    Mfinal = Mfinal * M;
+    
+    sprintf('after outer iteration %d, error is %.5f\n', s, norm(A*Mfinal - eye(dim), 'fro'))
 end
+
+sprintf('in the end, after preconditioning, error is %.5f\n', s, norm(A*Mfinal - eye(dim), 'fro'))
 
 % x_true = ones(dim, 1);
 % b = A*x_true;
