@@ -2,7 +2,7 @@ A = spconvert(load('../dataset/memplus.mtx'));
 
 [dim, ~] = size(A);
 
-err_thresh_list = [0.5 0.3];
+err_thresh_list = [0.3];
 [~, nb_err_thresh] = size(err_thresh_list);
 
 t=10;
@@ -23,15 +23,15 @@ is_correct = [];
 bic_relres = [];
 bic_conv_iter = [];
 
+b = A*ones(dim, 1);
+
 for i = 1:nb_err_thresh
 
     M = eye(dim);
     err_thresh = err_thresh_list(i);
     [Mfinal] = spai(A, M, t, num_workers, err_thresh, maxiter, debug);
 
-    b = A*ones(dim, 1);
-
-    bic_thresh = 1e-6;
+    bic_thresh = 1e-16;
     bic_default_iter = 500;
     [x_star, flag, curr_relres, curr_iter] = bicgstab(A*Mfinal, b, bic_thresh, bic_default_iter);
     x = Mfinal * x_star;
