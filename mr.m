@@ -22,11 +22,7 @@ Mfinal = M;
             if norm(rj) < eps
                 break
             end
-            
-            
-            % TODO, use SAXPY? When A is sparse, see chow saad
-            
-
+ 
             Arj = A*rj;
             
             alphaj = dot(rj, Arj) / dot(Arj, Arj);
