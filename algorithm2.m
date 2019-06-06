@@ -28,7 +28,7 @@ end
 Mfinal = eye(dim);
 A_ = A;
 
-sprintf('before preconditioning, error is %.5f\n', s, norm(A*Mfinal - eye(dim), 'fro'))
+sprintf('before preconditioning, error is %.5f', norm(A*Mfinal - eye(dim), 'fro'))
 
 for s = 1:outer_max_iter
     % get a preconditioner for current A_ from MR
@@ -38,10 +38,10 @@ for s = 1:outer_max_iter
     A_ = A_*M;
     Mfinal = Mfinal * M;
     
-    sprintf('after outer iteration %d, error is %.5f\n', s, norm(A*Mfinal - eye(dim), 'fro'))
+    sprintf('after outer iteration %d, error is %.5f', s, norm(A*Mfinal - eye(dim), 'fro'))
 end
 
-sprintf('in the end, after preconditioning, error is %.5f\n', s, norm(A*Mfinal - eye(dim), 'fro'))
+sprintf('in the end, after preconditioning, error is %.5f', norm(A*Mfinal - eye(dim), 'fro'))
 
 % x_true = ones(dim, 1);
 % b = A*x_true;
