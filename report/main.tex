@@ -1,0 +1,215 @@
+%%% document layout
+\documentclass[paper=A4, fontsize=11pt]{scrartcl}
+\setlength\parindent{0pt}
+\usepackage[margin=1in]{geometry}
+
+%%% packages
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{bbm}
+\usepackage{complexity}
+\usepackage{tcolorbox}
+\usepackage{mathrsfs}
+
+%%% hacks
+\setlength\parindent{0pt}
+\newcommand{\horrule}[1]{\rule{\linewidth}{#1}}
+\let\originalleft\left
+\let\originalright\right
+\renewcommand{\left}{\mathopen{}\mathclose\bgroup\originalleft}
+\renewcommand{\right}{\aftergroup\egroup\originalright}
+
+%%% macros
+\let\oldpr\Pr
+\renewcommand{\Pr}[1]{\oldpr\left( #1 \right)}
+\newcommand{\Prsub}[2]{\oldpr_{#1}\left( #2 \right)}
+\newcommand{\EX}[1]{{{\mathbb{E}}\left[#1\right]}}
+\newcommand{\EXSUB}[2]{{{\mathbb{E}}_{#1}\left[#2\right]}}
+\newcommand{\VAR}[1]{\text{Var}\left[#1\right]}
+\newcommand{\COVAR}[2]{\text{Cov}\left[#1,\, #2\right]}
+\newcommand{\ZO}{\{0, \, 1\}}
+\newcommand{\median}[1]{\text{med}\left\lbrace #1\right\rbrace}
+\newcommand{\order}[1]{\mathcal{O}\left(#1\right)}
+\renewcommand{\vec}[1]{\mathbf{#1}}
+\newcommand{\indicator}[1]{\mathbf{1}_{\left[#1\right]}}
+\newcommand{\twosum}[2]{\sum_{\substack{#1\\#2}}}
+\newcommand{\support}[1]{\textup{sup}\left(#1\right)}
+\newcommand{\partspace}{\vspace{.3cm}}
+\newcommand{\exspace}{\vspace{.8cm}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+%%% envs def
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+
+%%% title
+\title{Sparse Approximate Inverse Preconditioner}
+\subtitle{Computational Linear Algebra}
+\author{Sidak Pal Singh}
+
+\begin{document}
+\maketitle
+%$$\textbf{Disclaimer: } This project follows closely a project given in a different class covering convex optimization.
+
+\section{Abstract}
+
+In this project, the aim is to construct a sparse preconditioner M for a given sparse matrix A. More specifially, we look for a right preconditioner M such that $\|I-A M\|_{F}$ is minimized. \\
+One of the most successful general-purpose methods for achiev- ing this tasks is SPAI by Grote and Huckle [3]. Improvements to the method from [3] have been described in [2]. The paper [1] provides an overview of these and similar methods.
+
+
+\section{Introduction}
+
+intro of sparse inverse problem
+
+\newpage
+
+\section{SPAI}
+
+Goal
+
+\begin{equation}
+\|A M-I\|_{F}^{2}=\sum_{k=1}^{n}\left\|(A M-I) e_{k}\right\|_{2}^{2}
+\end{equation}
+
+i.e. n independent least squares
+
+
+\begin{equation}
+\min _{m_{k}}\left\|A m_{k}-e_{k}\right\|_{2}, \quad k=1, \ldots, n
+\end{equation}
+
+
+How to compute sparsity structure 
+
+
+
+We denote the reduced vector of unknowns  $m_{k}(\mathcal{J}) $ by  $\hat{m}_{k}$, define here also %\mathcal{J}, ...
+
+Given sparsity structure we can focus on the following problem
+
+\begin{equation}
+\min _{\hat{m}_{k}}\left\|\hat{A} \hat{m}_{k}-\hat{e}_{k}\right\|_{2}
+\end{equation}
+
+\begin{equation}
+\hat{A}=Q\left(\begin{array}{l}{R} \\ {0}\end{array}\right)
+\end{equation}
+
+let \(\hat{c}=Q^{T} \hat{e}_{k}\), then the solution to (3) is 
+
+\begin{equation}
+\hat{m}_{k}=R^{-1} \hat{c}\left(1 : n_{2}\right)
+\end{equation}
+
+Solve (5) for every column of M to get an approximate inverse. The next 
+step is to increase the sparsity structure to improve upon the previous solution.
+
+The idea is to add indices that will lead to best reduction in error. We recall that the current error is \(\|A M-I\|_{F},\), in other words to \(\left\|A m_{k}-e_{k}\right\|_{2}\) for each \(k=1, \ldots, n .\) We recall that \(m_{k}\) is the optimal solution of the least squares problem (4), and we denote its residual by
+
+\begin{equation}
+r=A( ., \mathcal{J}) \hat{m}_{k}-e_{k}
+\end{equation}
+
+We note that if r = 0, then we are done with the column (i.e. \(m_{k}\) is equal to the kth column of $A^{-1}$
+
+
+\begin{equation}
+\tilde{\mathcal{J}}=\bigcup_{\ell \in \mathcal{L}} \mathcal{N}_{\ell}
+\end{equation}
+
+\begin{equation}
+\tilde{\mathcal{J}}=\bigcup_{\ell \in \mathcal{L}} \mathcal{N}_{\ell}
+\end{equation}
+
+\begin{equation}
+\min _{\mu_{j}}\left\|r+\mu_{j} A e_{j}\right\|_{2}
+\end{equation}
+
+\begin{equation}
+\mu_{j}=-\frac{r^{T} A e_{j}}{\left\|A e_{j}\right\|_{2}^{2}}
+\end{equation}
+
+\begin{equation}
+\rho_{j}^{2}=\|r\|_{2}^{2}-\frac{\left(r^{T} A e_{j}\right)^{2}}{\left\|A e_{j}\right\|_{2}^{2}}
+\end{equation}
+
+\begin{equation}
+0=r(\mathcal{L})^{T} A(\mathcal{L}, \tilde{\mathcal{J}})=r(\mathcal{L})^{T} A(\mathcal{L}, \mathcal{J} \cup \tilde{\mathcal{J}})
+\end{equation}
+
+\newpage
+
+\section{Theorem 3.3}
+
+We now derive bounds for the singular values and the condition number of AM.
+
+THEOREM 3.3. The singular values of \(A M\) are clustered at 1 and lie inside the
+interval \([1-\delta, 1+\delta],\) with \(\delta=\sqrt{n} \varepsilon(2+\sqrt{n} \varepsilon) .\) Furthermore, if \(\delta<1,\) then the
+condition number of \(A M\) satisfies
+
+\begin{equation}
+\operatorname{cond}_{2}(A M) \leq \sqrt{\frac{1+\delta}{1-\delta}}
+\end{equation}
+
+
+LEMMA \(1.\) Let \(p=\max _{1 \leq k \leq n}\left\{\text { number of nonzero elements of } r_{k}\right\} .\) Then
+\begin{equation}
+\|A M-I\|_{F} \leq \sqrt{n} \varepsilon
+\end{equation}
+
+\begin{equation}
+\|A M-I\|_{2} \leq \sqrt{n} \varepsilon
+\end{equation}
+
+\begin{equation}
+\|A M-I\|_{1} \leq \sqrt{p} \varepsilon
+\end{equation}
+Proof:
+
+\begin{equation}
+\|A M-I\|_{F}^{2}=\sum_{k=1}^{n}\left\|(A M-I) e_{k}\right\|_{2}^{2} \leq \sum_{k=1}^{n} \varepsilon^{2}=n \varepsilon^{2}
+\end{equation}
+
+\begin{equation}
+\begin{array}{l}{\|A M-I\|_{2}=\max _{\|x\|_{2}=1}\|(A M-I) x\|_{2}} \\ {=\max _{\|x\|_{2}=1}\left\|\sum_{k=1}^{n} x_{k}(A M-I) e_{k}\right\|_{2} \leq \max _{\|x\|_{2}=1}\|x\|_{1} \varepsilon \leq \sqrt{n} \varepsilon}\end{array}
+\end{equation}
+
+
+Gershgorin's Theorem \\
+
+
+Lemma 2:
+The eigenvalues $\lambda_k$ of $AM$ are clustered at 1 and lie inside a circle of radius $\sqrt{p} \varepsilon$
+
+Let $Q R Q^{T}$ be a Schur decomposition of $A M-I$. Then:
+
+\begin{equation}
+\sum_{k=1}^{n}\left|1-\lambda_{k}\right|^{2}=\|\operatorname{diag}(R)\|_{2}^{2} \leq\|R\|_{F}^{2}=\|A M-I\|_{F}^{2} \leq n \varepsilon^{2}
+\end{equation}
+
+\begin{equation}
+\frac{1}{n} \sum_{k=1}^{n}\left|1-\lambda_{k}\right|^{2} \leq \varepsilon^{2}
+\end{equation}
+\\
+
+%$$
+%\square
+%$$
+Getting back to the proof of the main theorem:
+
+ Since the singular values of $AM$ are the square roots of the eigenvalues of $A M M^{T} A^{T} $, 
+
+\begin{equation}
+\left\|I-A M M^{T} A^{T}\right\|_{2}=\left\|I+(I-A M) M^{T} A^{T}-M^{T} A^{T}\right\|_{2}
+\end{equation}
+
+\begin{equation}
+\sqrt{n} \varepsilon\left(1+\|A M\|_{2}\right) \leq \sqrt{n} \varepsilon\left(1+\|A M-I+I\|_{2}\right) \leq \sqrt{n} \varepsilon(2+\sqrt{n} \varepsilon)
+\end{equation}
+
+\begin{equation}
+\operatorname{cond}_{2}(A M) \leq \sqrt{\frac{1+\delta}{1-\delta}}
+\end{equation}
+
+\end{document}
