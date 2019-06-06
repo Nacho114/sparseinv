@@ -29,7 +29,7 @@ end
 
 if normalize
     display(cond(A))
-    col_norms = sqrt(diag(A'*A))';
+    col_norms = sqrt(diag(A'*A))' + 1e-8;
     A = A ./ col_norms;
     A_tmp = A;
     display(cond(A))
