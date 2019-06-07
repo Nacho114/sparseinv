@@ -380,55 +380,37 @@ Finally, applying Lemma 3 to the matrix $ A M M^{T} A^{T} $ instead of $ A M$ we
 
 \begin{section}{MR algorithm}
 	
-	Chow and Saad \cite{chow} also propose an algorithm based on minimal residual iterations (aka MR) to find an approximate sparse inverse via minimizing the Frobenius norm.\\
+	Chow and Saad \cite{chow} also propose an algorithm based on minimal residual iterations (aka MR) to find a sparse approximate inverse via minimizing the Frobenius norm.\\
 	
-	As in the SPAI \cite{grote}, it solves each column of $M$ independently. For each column we run $n_{i}$ iterations on a descent method that iteratively minimizes the residual while also performing numerical dropping to enforce sparsity in $M$.
+	Like SPAI \cite{grote} (which also aims to minimize Frobenius norm), this algorithm considers each column of $M$ independently. Thus, for each column it runs $n_{i}$ iterations to minimize the residual, similar in spirit to a descent method, while also performing numerical dropping to enforce sparsity in $M$. 
 	
 	\subsection{Derivation of MR}
 	
-	First initialise $M$, for example $M = \alpha I$ or $M = A^{T}$. Choose $lfil$, the number of entries to keep in each column of $M$ during numerical dropping.
-	Then at iteration $j$ update $m{j}$ as follows.
-	\\\\\\
-	First compute the residual
+	\paragraph{Initialization.}
+	$M$ is initialized by either a scaled identity matrix or scaled transpose of the given matrix $A$. In other words, $M = \alpha I$ or $M =\alpha A^{T}$. The latter has the benefit that preconditioner is of a similar sparsity structure as the given matrix $A$ and this is the one used for numerical experiments later.  
+	
+	\paragraph{Update strategy.}
+	At each iteration for the column $m_{j}$, it computes the current residual $r_j$ and the corresponding update  $\hat{m}_{j}$ as follows:
 	\begin{equation}
-	r_{j} :=e_{j}-A m_{j}
-	\end{equation}
-	\\
-	Then, update $m{j}$ in the direction of the residual with step $\alpha_{j}$ that minimizes the updated residual \footnote{See end of section for proof.}
-	
-	\begin{equation}
-	m_{j} :=m_{j}+\alpha_{j} r_{j}
-	\end{equation}
-	
-	\begin{equation}
-	\alpha_{j} :=\frac{\left(r_{j}, A r_{j}\right)}{\left(A r_{j}, A r_{j}\right)}
-	\end{equation}
-	\,
-	After the update we perform numerical dropping on $m_{j}$. MR then continues until $j == n_{i}$
-	
-	
-	\subsection{Numerical dropping}
-	
-	The goal of numerical dropping is to keep $M$ sparse. In \cite{chow}, this is done by computing for each entry $i$ of column $j$ the following value
-	
-
-	\begin{equation}
-	\rho_{i j}=-2 m_{i j}\left(e_{i}, A^{T} r_{j}\right)+m_{i j}^{2}
+	r_{j} :=e_{j}-A m_{j}, \quad \text{and} \quad \hat{m}_{j} :=m_{j}+\alpha_{j} r_{j}.
 	\end{equation}
 
-	We then keep the $\text{lfil}$ entries which have the largest $\left|\rho_{i j}\right|$
+	Then, the update $\hat{m}_{j}$ is carried out in the direction of $r_j$ (the current residual), so as to minimize the resulting residual at next step. This involves solving a one-dimensional optimization problem to compute the optimal step size $\alpha_{j}$. This procedure is then repeated until $j = n_{i}$ and  is the gist of the algorithm, besides the numerical dropping discussed later. 
 	
-	\subsection{Proof of update rule}
+	\begin{lemma}
+Under the update rule $\hat{m}_{j} :=m_{j}+\alpha_{j} r_{j}$, 	the optimal step size $\alpha_{j}$ with respect to the next residual is 
 	
-	Let $A$ be a matrix and $r, e, m$ be vectors s.t. $r = e - Am$. If we want to minimize the norm of $\hat{r}$; where $\hat{r} = e - A\hat{m}$, s.t. $\hat{m}$ lies along the path $m + \alpha r$. \\
-	Then, the optimal step size is $\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$
+	\begin{equation}
+	\alpha_{j} :=\frac{\langle r_{j}, A r_{j}\rangle}{\langle A r_{j}, A r_{j}\rangle}
+	\end{equation}
+	
+\end{lemma}
 
-	Proof 
-
-	We compute the gradient of $\|\hat{r}\|_{2}$ w.r.t. $\alpha$ to find the optimum step size. 
+\begin{proof}
+		For the sake of clarity, we drop the subscript $j$ corresponding to the column index in the proof ahead. 
+		Let $r, e, m$ be vectors s.t. $r = e - Am$. If we want to minimize the norm of $\hat{r}$; where $\hat{r} = e - A\hat{m}$, s.t. $\hat{m}$ lies along the path $m + \alpha r$. We need to show that the optimal step size is $$\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$$
 	
-	
-	
+		We compute the gradient of $\|\hat{r}\|_{2}$ w.r.t. $\alpha$ to find the optimum step size. 
 	
 	\begin{equation}
 	\begin{aligned}
@@ -442,7 +424,31 @@ Finally, applying Lemma 3 to the matrix $ A M M^{T} A^{T} $ instead of $ A M$ we
 	\end{aligned}
 	\end{equation}
 	
-	By setting the derivative to $0$ we find that $\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$
+	By setting the derivative to $0$ we find that $\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$.
+\end{proof}	
+
+	
+	
+	\subsection{Numerical dropping}
+	The goal of numerical dropping is to keep $M$ sparse. Let's designate by $\text{lfil}$, the number of entries to keep in each column of $M$ during this procedure. In \cite{chow}, this is done by computing for each entry $i$ of column $j$ the following value, 
+	
+
+	\begin{equation}\label{eq:rho}
+	\rho_{i j}=-2 m_{i j}\left(e_{i}, A^{T} r_{j}\right)+m_{i j}^{2}.
+	\end{equation}
+
+	%Here, the $\rho_{i j}$ measures the amount of reduction in the residual by considering entry $i$. We then keep the $\text{lfil}$ entries which result in the maximum decrease.
+
+The reasoning for having such a criteria is based on the following equation \eqref{eq:pert} derived via a perturbation analysis.
+Consider that $\left\|\hat{r}_{j}\right\|_{2}^{2}$ denotes the residual of a perturbed $\hat{m}_{j} = m_j + d$, where $d = m_{ij} e_j$.
+
+\begin{equation}\label{eq:pert}
+\left\|\hat{r}_{j}\right\|_{2}^{2}-\left\|r_{j}\right\|_{2}^{2}= \rho_{i j} = -2 m_{i j}\left(e_{i}, A^{T} r_{j}\right)+m_{i j}^{2}
+\end{equation}
+
+This intuitively means that $\rho_{i j}$ measures the amount of reduction in the residual by considering entry $i$. We then keep the $\text{lfil}$ entries which result in the maximum decrease.
+%This gives rise to the following strategy:
+%pick the $\text{lfil}$ elements with the highest $\rho_{i j}$ value, as if these are perturbed, they will cause the residual to increase the most, and therefore it would make sense to keep them. 
 	
 	
 \end{section}
