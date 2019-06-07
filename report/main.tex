@@ -392,7 +392,92 @@ Finally, applying Lemma \ref{lma:cond} to the matrix $ A M M^{T} A^{T} $ instead
 \end{proof}
 
 \newpage
+\begin{section}{Experiments: SPAI}
 
+\subsection{Quality of preconditioning}
+
+\begin{figure}[h]
+\centering
+ \includegraphics[width=0.75\linewidth]{grote2.png}
+\caption{Results as reported in Grote and Huckle \cite{grote}.}
+	\label{fig:groteh}
+	
+\end{figure}
+	
+%\includegraphics[scale=.5]{grote2.png}
+
+Here, our objective is to reproduce the results of SPAI (c.f. Figure \ref{fig:groteh}) on the Orsirr2 matrix. Table \ref{tab:grote2} shows our results for the same. We observe that our results exactly the same as the ones from \cite{grote}. 
+	\begin{table}[h]
+	\centering
+	\begin{tabular}{@{}cccccc@{}}
+		\toprule
+		$\varepsilon$ &    $||AM-I||_F$ &  $||AM-I||_2$ &   $||AM-I||_1$ &  $\operatorname{cond}_2(AM)$   & $\frac{{nz}(M)}{{nz}(a)}$ \\
+		\midrule
+		0.60 & 14.26 &  1.02  &  1.22 & 1989.98  &  0.32 \\
+		
+		0.50 & 11.29 &  1.08  &  1.56 & 210.79  &  0.61 \\
+		
+		0.40 &  8.97 &  1.05  &  1.56 & 74.15  &   0.89 \\
+		
+		0.30  & 7.12  & 1.00  &  1.76 & 35.13  &  1.53 \\
+		
+		0.20 &  4.81 &  0.98  &  1.72 &  12.82 &   3.41 \\
+		\bottomrule
+	\end{tabular}
+	\caption{Our results for SPAI on the Orsirr2 matrix using identical parameters.}
+	\label{tab:grote2}
+\end{table}
+
+
+
+\subsection{Performance with linear system solvers}
+Next, we aim to verify the numerical results when the preconditioner is used along with a linear system solver, in particular BICGSTAB. We compare the number of iterations\footnote{Note that MATLAB implementation of BICGSTAB sometimes reports fractional iterations to indicate ``convergence half way through an iteration''} required by BICGTSTAB for convergence, the results of which can be found in Table \ref{tab:grote1}. 
+\begin{table}[h]
+	\centering
+	\begin{tabular}{@{}ccc@{}}
+		\toprule
+		$\varepsilon$ & Bi-CGSTAB (ours) & Bi-CGSTAB (original)\\
+		\midrule
+		0.6    &   172.5       & 223\\     
+		0.5    &   59.5        & 68\\    
+		0.4    &   33.5        &47 \\    
+		0.3    &   29.5        & 32 \\    
+		0.2    &   15.5 & 18 \\
+		\bottomrule
+	\end{tabular}
+	\caption{}
+	\label{tab:grote1}
+\end{table}
+
+We observe that we get better results, i.e., lower number of iterations to converge. This is probably because of the improvements in implementation of the solver over time. \\
+
+Additionally, we compare to results from Benzi and Tuma \cite{benzi} for a similar set of experiments on the performance of the preconditioner with a linear system solver (BICGSTAB again). The authors \cite{benzi} report results on two datasets: 3DCD and Memplus, but the former is not publicly available. Hence, we stick to Memplus and the results of which can be found in Table \ref{tab:benzi}.
+
+\begin{table}[h]
+	\centering
+	\begin{tabular}{@{}cccc@{}}
+		\toprule
+		SPAI error threshold & BICGSTAB tolerance & \# Iterations & Relative residual  \\ \midrule
+		\multirow{4}{*}{0.5}& 1e-08 & 9.0 & 1e-08 \\
+		& 1e-12 & 93.0 & 4e-13 \\
+		& 1e-16 & 156.5 & 2e-16 \\
+		(original)			& NA & 140.0 & NA \\
+		\midrule
+		\multirow{4}{*}{0.3} & 1e-08	& 8.5	& 9e-09 \\
+		& 1e-12	& 73.5	& 1e-12 \\
+		& 1e-16	& 122.5	& 5e-16 \\
+		(original)					& NA & 117.0 & NA \\
+		\bottomrule
+	\end{tabular}
+	\caption{Results of solving a linear system (with BICGSTAB) for the Memplus matrix using the sparse approximate inverse with those mentioned in Benzi and Tuma \cite{benzi}.}
+	\label{tab:benzi}
+\end{table}
+
+An important practical aspect that we couldn't find from the paper was the value of BICGSTAB tolerance employed by them. Hence, we show the results at various values of this tolerance, and we find that for $1e-16$ the results closely match and for values larger than that BICGSTAB converges much faster. 
+
+\paragraph{Summary.} Hence, we find that the results of SPAI can be reproduced fairly well across various experimemts. 
+\end{section}
+\newpage
 \begin{section}{MR algorithm}
 	
 	Chow and Saad \cite{chow} also propose an algorithm based on minimal residual iterations (aka MR) to find a sparse approximate inverse via minimizing the Frobenius norm.\\
@@ -471,47 +556,10 @@ This intuitively means that $\rho_{i j}$ measures the amount of reduction in the
 
 \newpage
 
-\begin{section}{Experiments}
+\begin{section}{Experiments: MR}
 	
-	\begin{table}[]
-		\centering
-	\begin{tabular}{@{}cccccc@{}}
-\toprule
-		$\varepsilon$ &    $||AM-I||_F$ &  $||AM-I||_2$ &   $||AM-I||_1$ &  $\operatorname{cond}_2(AM)$   & $\frac{{nz}(M)}{{nz}(a)}$ \\
-		\midrule
-		0.60 & 14.26 &  1.02  &  1.22 & 1989.98  &  0.32 \\
 
-		0.50 & 11.29 &  1.08  &  1.56 & 210.79  &  0.61 \\
-
-		0.40 &  8.97 &  1.05  &  1.56 & 74.15  &   0.89 \\
-
-		0.30  & 7.12  & 1.00  &  1.76 & 35.13  &  1.53 \\
-
-		0.20 &  4.81 &  0.98  &  1.72 &  12.82 &   3.41 \\
-\bottomrule
-	\end{tabular}
-		\caption{}
-	\label{tab:grote2}
-\end{table}
-
-	\begin{table}[]
-		\centering
-	\begin{tabular}{@{}ccc@{}}
-		\toprule
-		$\varepsilon$ & Bi-CGSTAB (ours) & Bi-CGSTAB (original)\\
-		\midrule
-		0.6    &   172.5       & 223\\     
-		0.5    &   59.5        & 68\\    
-		0.4    &   33.5        &47 \\    
-		0.3    &   29.5        & 32 \\    
-		0.2    &   15.5 & 18 \\
-		\bottomrule
-	\end{tabular}
-	\caption{}
-	\label{tab:grote1}
-\end{table}
-
-\begin{table}[]
+\begin{table}[h]
 	\centering
 \begin{tabular}{@{}lc|cc|cccccc@{}}
 	\toprule
@@ -534,25 +582,7 @@ This intuitively means that $\rho_{i j}$ measures the amount of reduction in the
 \end{table}
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
-\begin{table}[]
-	\centering
-	\begin{tabular}{@{}cccc@{}}
-		\toprule
-		SPAI error threshold & BICGSTAB tolerance & \# Iterations & Relative residual  \\ \midrule
-		\multirow{4}{*}{0.5}& 1e-08 & 9.0 & 1e-08 \\
-			& 1e-12 & 93.0 & 4e-13 \\
-			& 1e-16 & 156.5 & 2e-16 \\
-			(original)			& NA & 140.0 & NA \\
-		\midrule
-		\multirow{4}{*}{0.3} & 1e-08	& 8.5	& 9e-09 \\
-		& 1e-12	& 73.5	& 1e-12 \\
-		& 1e-16	& 122.5	& 5e-16 \\
-			(original)					& NA & 117.0 & NA \\
-		\bottomrule
-	\end{tabular}
-	\caption{Results of solving a linear system (with BICGSTAB) using the sparse approximate inverse with those mentioned in Benzi and Tuma \cite{benzi}.}
-	\label{tab:benzi}
-\end{table}
+
 
 \end{section}
 
