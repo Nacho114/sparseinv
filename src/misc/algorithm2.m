@@ -1,5 +1,5 @@
 % A = [ 1.000 0.000 0.000; 5.000 6.000 7.000; 0.000 1.000 0.000];
-A = spconvert(load('../dataset/sherman1.mtx'));
+A = spconvert(load('../../dataset/sherman1.mtx'));
 
 % A = 3*eye(3)
 % A(1, 2) = 2

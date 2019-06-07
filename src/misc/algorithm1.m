@@ -18,8 +18,8 @@ if strcmp(matrix_type, 'ex1')
 elseif strcmp(matrix_type, 'ex2')
     A=[1 8 0 5 7; 8 10 1 2 0; 0 0 0 1 0; 1 2 0 0 3; 2 1 -1 0 0.2];
 elseif strcmp(matrix_type, 'orsirr2')
-    B = load('../dataset/orsirr_2.mtx')
-    A = spconvert(load('../dataset/orsirr_2.mtx'));
+    B = load('../../dataset/orsirr_2.mtx')
+    A = spconvert(load('../../dataset/orsirr_2.mtx'));
 end
 
 display(size(A))
