@@ -13,6 +13,12 @@
 \usepackage{amsthm}
 \usepackage{booktabs}
 \usepackage{multirow}
+\usepackage{mathtools}
+\mathtoolsset{showonlyrefs}
+\PassOptionsToPackage{numbers,sort,compress}{natbib}
+
+\RequirePackage[pagebackref,colorlinks,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage{url}
 
 
 %%% hacks
@@ -42,6 +48,8 @@
 \newcommand{\exspace}{\vspace{.8cm}}
 \DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareMathOperator*{\argmin}{arg\,min}
+
+\newcommand{\ra}[1]{\renewcommand{\arraystretch}{#1}}
 
 %%% envs def
 \newtheorem{lemma}{Lemma}[section]
@@ -73,7 +81,7 @@
 	\section{Abstract}
 	
 	In this project, the aim is to construct a sparse preconditioner M for a given sparse matrix A. More specifically, we look for a right preconditioner M such that $\|I-A M\|_{F}$ is minimized. \\
-	One of the most successful general-purpose methods for achieving this tasks is SPAI by Grote and Huckle [3]. We will derive their algorithm along with a theorem 
+	One of the most successful general-purpose methods for achieving this tasks is SPAI by Grote and Huckle \cite{grote}. We will derive their algorithm along with a theorem 
 	
 	
 	\section{Introduction}
@@ -141,7 +149,7 @@
 	
 \section{SPAI}
 
-The goal is to efficiently find a sparse inverse of $A$, the SPAI algorithm does so by minimizing the Frobenious norm as it is more tractable and it also leads to inherent parallelism given that the columns of $M$ are independent of one another.
+The goal is to efficiently find a sparse inverse of $A$, the SPAI algorithm does so by minimizing the Frobenius norm as it is more tractable and it also leads to inherent parallelism given that the columns of $M$ are independent of one another.
 
 \begin{equation}
 \|A M-I\|_{F}^{2}=\sum_{k=1}^{n}\left\|(A M-I) e_{k}\right\|_{2}^{2}
@@ -372,53 +380,71 @@ Finally, applying Lemma 3 to the matrix $ A M M^{T} A^{T} $ instead of $ A M$ we
 
 \begin{section}{MR algorithm}
 	
-	The minimal residual iteration (aka MR) also attempts to find an approximate sparse inverse via minimizing the Frobenius norm.
+	Chow and Saad \cite{chow} also propose an algorithm based on minimal residual iterations (aka MR) to find an approximate sparse inverse via minimizing the Frobenius norm.\\
 	
-	As in SPAI, it solves each column of $M$ independently. For each column we run $n_{i}$ iterations on a descent method that minimizes that iteratively minimizes the residual while also performing numerical dropping to enforce sparsity in $M$.
+	As in the SPAI \cite{grote}, it solves each column of $M$ independently. For each column we run $n_{i}$ iterations on a descent method that iteratively minimizes the residual while also performing numerical dropping to enforce sparsity in $M$.
 	
-	First initialise $M$, for example $M = \alpha Id$ or $M = A^{T}$.
-	Then for $n_{i}$ iterations update $m{j}$ as follows ...
+	\subsection{Derivation of MR}
+	
+	First initialise $M$, for example $M = \alpha I$ or $M = A^{T}$. Choose $lfil$, the number of entries to keep in each column of $M$ during numerical dropping.
+	Then at iteration $j$ update $m{j}$ as follows.
+	\\\\\\
+	First compute the residual
+	\begin{equation}
+	r_{j} :=e_{j}-A m_{j}
+	\end{equation}
+	\\
+	Then, update $m{j}$ in the direction of the residual with step $\alpha_{j}$ that minimizes the updated residual \footnote{See end of section for proof.}
 	
 	\begin{equation}
-	\begin{array}{l}{r_{j} :=e_{j}-A m_{j}} \\ {\alpha_{j} :=\frac{\left(r_{j}, A r_{j}\right)}{\left(A r_{j}, A r_{j}\right)}} \\ {m_{j} :=m_{j}+\alpha_{j} r_{j}} \\ {\text {Apply numerical dropping to } m_{j}}\end{array}
+	m_{j} :=m_{j}+\alpha_{j} r_{j}
 	\end{equation}
-	see proof of step bellow
 	
-Numerical dropping ....
+	\begin{equation}
+	\alpha_{j} :=\frac{\left(r_{j}, A r_{j}\right)}{\left(A r_{j}, A r_{j}\right)}
+	\end{equation}
+	\,
+	After the update we perform numerical dropping on $m_{j}$. MR then continues until $j == n_{i}$
+	
+	
+	\subsection{Numerical dropping}
+	
+	The goal of numerical dropping is to keep $M$ sparse. In \cite{chow}, this is done by computing for each entry $i$ of column $j$ the following value
+	
 
-\begin{equation}
-\rho_{i j}=-2 m_{i j}\left(e_{i}, A^{T} r_{j}\right)+m_{i j}^{2}
-\end{equation}
+	\begin{equation}
+	\rho_{i j}=-2 m_{i j}\left(e_{i}, A^{T} r_{j}\right)+m_{i j}^{2}
+	\end{equation}
 
-keep the  lfil elements that have the largest $\left|\rho_{i j}\right|$
+	We then keep the $\text{lfil}$ entries which have the largest $\left|\rho_{i j}\right|$
+	
+	\subsection{Proof of update rule}
+	
+	Let $A$ be a matrix and $r, e, m$ be vectors s.t. $r = e - Am$. If we want to minimize the norm of $\hat{r}$; where $\hat{r} = e - A\hat{m}$, s.t. $\hat{m}$ lies along the path $m + \alpha r$. \\
+	Then, the optimal step size is $\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$
 
-Proof here of step
+	Proof 
 
-Let $A$ be a matrix and $r, e, m$ be vectors s.t. $r = e - Am$. If we want to minimize the norm of $\hat{r}$; where $\hat{r} = e - A\hat{m}$, s.t. $\hat{m}$ lies along the path $m + \alpha r$. \\
-Then, the optimal step size is $\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$
-\\\\
-Proof 
-\\\\
-We compute the gradient of $\|\hat{r}\|_{2}$ w.r.t. $\alpha$ to find the optimum step size. 
-
-
-
-
-\begin{equation}
-\begin{aligned}
-\frac{\partial \|\hat{r} \|_{2}^{2}}{\partial \alpha} 
-& = \frac{\partial \|e - A\hat{m}\|_{2}^{2}}{\partial \alpha} \\
-& = \frac{\partial \|e - A(m + \alpha r)\|_{2}^{2}}{\partial \alpha} \\
-& = 2\alpha \|Ar\|_{2}^{2}  + 2(Am)^{T}Ar - 2e^{T}Ar \\
-& = 2\alpha \|Ar\|_{2}^{2}  + 2(Am - e)^{T}Ar \\
-& = 2\alpha \|Ar\|_{2}^{2}  - 2r^{T}Ar \\
-\\
-\end{aligned}
-\end{equation}
-
-By setting the derivative to $0$ we find that $\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$
-
-
+	We compute the gradient of $\|\hat{r}\|_{2}$ w.r.t. $\alpha$ to find the optimum step size. 
+	
+	
+	
+	
+	\begin{equation}
+	\begin{aligned}
+	\frac{\partial \|\hat{r} \|_{2}^{2}}{\partial \alpha} 
+	& = \frac{\partial \|e - A\hat{m}\|_{2}^{2}}{\partial \alpha} \\
+	& = \frac{\partial \|e - A(m + \alpha r)\|_{2}^{2}}{\partial \alpha} \\
+	& = 2\alpha \|Ar\|_{2}^{2}  + 2(Am)^{T}Ar - 2e^{T}Ar \\
+	& = 2\alpha \|Ar\|_{2}^{2}  + 2(Am - e)^{T}Ar \\
+	& = 2\alpha \|Ar\|_{2}^{2}  - 2r^{T}Ar \\
+	\\
+	\end{aligned}
+	\end{equation}
+	
+	By setting the derivative to $0$ we find that $\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$
+	
+	
 \end{section}
 
 
@@ -449,21 +475,42 @@ By setting the derivative to $0$ we find that $\alpha = \frac{\langle\,r,Ar\rang
 
 	\begin{table}[]
 		\centering
-	\begin{tabular}{@{}cc@{}}
+	\begin{tabular}{@{}ccc@{}}
 		\toprule
-		$\varepsilon$ & Bi-CGSTAB \\
+		$\varepsilon$ & Bi-CGSTAB (ours) & Bi-CGSTAB (original)\\
 		\midrule
-		0.6    &   172.5       \\     
-		0.5    &   59.5        \\    
-		0.4    &   33.5        \\    
-		0.3    &   29.5        \\    
-		0.2    &   15.5 \\
+		0.6    &   172.5       & 223\\     
+		0.5    &   59.5        & 68\\    
+		0.4    &   33.5        &47 \\    
+		0.3    &   29.5        & 32 \\    
+		0.2    &   15.5 & 18 \\
 		\bottomrule
 	\end{tabular}
 	\caption{}
 	\label{tab:grote1}
 \end{table}
 
+\begin{table}[]
+	\centering
+\begin{tabular}{@{}lc|cc|cccccc@{}}
+	\toprule
+	Source & Matrix &    $\text{lfil}$ &  $n_{i}$ &   $1$ &  $2$ &  $3$ & $4$ &  $5$ \\ \midrule
+	\multirow{3}{*}{Ours} & SHERMAN1 & \multirow{3}{*}{10} & \multirow{3}{*}{1}  & 210 & 81 & 80 & 48 & 4  \\
+	
+	& SHERMAN3 &  &  & 546 & 48 & 306 & 65 & 156  \\
+
+	& SAYLR3 & & & 240 & 81 & 80 & 48 & 4  \\
+		\midrule
+	\multirow{3}{*}{Original} & SHERMAN1 & \multirow{3}{*}{10} & \multirow{3}{*}{1} & 224 & 187 & 96 & 74 & 60  \\
+
+& SHERMAN3 &  &  & 499 & 363 & 239 & 192 & 148  \\
+
+& SAYLR3 & & & 223 & 188 & 96 & 74 & 60  \\
+	\bottomrule
+	\end{tabular}
+	\caption{}
+\label{tab:chow}
+\end{table}
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 \begin{table}[]
@@ -471,21 +518,27 @@ By setting the derivative to $0$ we find that $\alpha = \frac{\langle\,r,Ar\rang
 	\begin{tabular}{@{}cccc@{}}
 		\toprule
 		SPAI error threshold & BICGSTAB tolerance & \# Iterations & Relative residual  \\ \midrule
-		\multirow{3}{*}{0.5}& 1e-08 & 9.0 & 1e-08 \\
+		\multirow{4}{*}{0.5}& 1e-08 & 9.0 & 1e-08 \\
 			& 1e-12 & 93.0 & 4e-13 \\
 			& 1e-16 & 156.5 & 2e-16 \\
+			(original)			& NA & 140.0 & NA \\
 		\midrule
-		\multirow{3}{*}{0.3} & 1e-08	& 8.5	& 9e-09 \\
+		\multirow{4}{*}{0.3} & 1e-08	& 8.5	& 9e-09 \\
 		& 1e-12	& 73.5	& 1e-12 \\
 		& 1e-16	& 122.5	& 5e-16 \\
+			(original)					& NA & 117.0 & NA \\
 		\bottomrule
 	\end{tabular}
-	\caption{}
+	\caption{Results of solving a linear system (with BICGSTAB) using the sparse approximate inverse with those mentioned in Benzi and Tuma \cite{benzi}.}
 	\label{tab:benzi}
 \end{table}
 
 \end{section}
+
 \clearpage
+\bibliographystyle{unsrt}
+\bibliography{references}
+
 \section{Appendix}
 
 \subsection{Orthonal invariance of the Frobenius norm}\label{sec:ortho}
@@ -505,26 +558,25 @@ Q as well as the cyclical property of the trace.
 \end{aligned}
 \end{equation}
 	
-\subsection{Some corollaries of the Cauchy Schwartz inequality} \label{sec:csi}
+\subsection{Some corollaries of the Cauchy Schwarz inequality} \label{sec:csi}
 
-Cauchy Schwartz states that:
+Cauchy Schwarz states that:
 
 \begin{equation}
-\langle\,x,y\rangle \leq \|x\|_{2}\|y\|_{2}
+\langle x,y\rangle \leq \|x\|_{2} \, \|y\|_{2}
 \end{equation}
 
-By choosing $y$ judiciously we get the two following additional inequalities.
-\\
-Let $x = (x_{1}, ..., x_{n})$ and $y = (1, 1, ..., 1)$
+If $x_i \geq 0, \, \forall i$, we can set $y= (1, 1, ..., 1)$ to get the following inequality:.
+%Let $x = (x_{1}, ..., x_{n})$ and $y = (1, 1, ..., 1)$
 
 \begin{equation}
-\sum_{i=1}^{n} x_{i} = \langle\,x,y\rangle  \leq  \|x\|_{2}\|y\|_{2} = \sqrt{n}\|x\|_{2}
+\sum_{i=1}^{n} x_{i} = \langle x,y\rangle  \leq  \|x\|_{2}\, \|y\|_{2} = \sqrt{n}\|x\|_{2}
 \end{equation}
 
-We can improve the inequality by choosing $y_{i} = sign(x_{i})$. 
+In fact, the above holds without loss of generality by considering $y_{i} = sign(x_{i})$. 
 
 \begin{equation}
-\sum_{i=1}^{n} \left|x_{i}\right| =  \|x\|_{1}\leq \sqrt{n}\|x\|_{2}
+\sum_{i=1}^{n} \left|x_{i}\right| = \langle x,y\rangle =  \|x\|_{1}\leq \sqrt{n}\|x\|_{2}
 \end{equation}	
 
 %TODO
