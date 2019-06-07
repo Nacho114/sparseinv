@@ -81,141 +81,150 @@
 	
 	\newpage
 	
-	\section{Prelude: A small lemma}
+%	\section{Prelude: A small lemma}
+%	
+%	Before we start our journey into the sparse inverse solvers, we introduce a small lemma:
+%	
+%	\begin{lemma}
+%		
+%		Let $A$ be a matrix and $r, e, m$ be vectors s.t. $r = e - Am$. If we want to minimize the norm of $\hat{r}$; where $\hat{r} = e - A\hat{m}$, s.t. $\hat{m}$ lies along the path $m + \alpha r$. \\
+%		Then, the optimal step size is $\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$
+%		\\\\
+%		Proof 
+%		\\\\
+%		We compute the gradient of $\|\hat{r}\|_{2}$ w.r.t. $\alpha$ to find the optimum step size. 
+%		
+%		
+%		
+%		
+%		\begin{equation}
+%		\begin{aligned}
+%		\frac{\partial \|\hat{r} \|_{2}^{2}}{\partial \alpha} 
+%		& = \frac{\partial \|e - A\hat{m}\|_{2}^{2}}{\partial \alpha} \\
+%		& = \frac{\partial \|e - A(m + \alpha r)\|_{2}^{2}}{\partial \alpha} \\
+%		& = 2\alpha \|Ar\|_{2}^{2}  + 2(Am)^{T}Ar - 2e^{T}Ar \\
+%		& = 2\alpha \|Ar\|_{2}^{2}  + 2(Am - e)^{T}Ar \\
+%		& = 2\alpha \|Ar\|_{2}^{2}  - 2r^{T}Ar \\
+%		\\
+%		\end{aligned}
+%		\end{equation}
+%		
+%		By setting the derivative to $0$ we find that $\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$
+%		
+%		
+%		
+%		
+%	\end{lemma}
+%	
+%	\begin{lemma}
+%		Let $A$ be a matrix and $r, e, m$ be vectors as before. 
+%		
+%		Then
+%		
+%		\begin{equation}
+%		\min _{\mu_{j}}\left\|r+\mu_{j} A e_{j}\right\|_{2}
+%		\end{equation}
+%		
+%		Has the following solution
+%		
+%		\begin{equation}
+%		\mu_{j}=-\frac{r^{T} A e_{j}}{\left\|A e_{j}\right\|_{2}^{2}}
+%		\end{equation}
+%		
+%		Proof
+%		\\
+%		We can use verbatim the proof of lemma 1.
+%	\end{lemma}
+%	
+%	\newpage
 	
-	Before we start our journey into the sparse inverse solvers, we introduce a small lemma:
-	
-	\begin{lemma}
-		
-		Let $A$ be a matrix and $r, e, m$ be vectors s.t. $r = e - Am$. If we want to minimize the norm of $\hat{r}$; where $\hat{r} = e - A\hat{m}$, s.t. $\hat{m}$ lies along the path $m + \alpha r$. \\
-		Then, the optimal step size is $\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$
-		\\\\
-		Proof 
-		\\\\
-		We compute the gradient of $\|\hat{r}\|_{2}$ w.r.t. $\alpha$ to find the optimum step size. 
-		
-		
-		
-		
-		\begin{equation}
-		\begin{aligned}
-		\frac{\partial \|\hat{r} \|_{2}^{2}}{\partial \alpha} 
-		& = \frac{\partial \|e - A\hat{m}\|_{2}^{2}}{\partial \alpha} \\
-		& = \frac{\partial \|e - A(m + \alpha r)\|_{2}^{2}}{\partial \alpha} \\
-		& = 2\alpha \|Ar\|_{2}^{2}  + 2(Am)^{T}Ar - 2e^{T}Ar \\
-		& = 2\alpha \|Ar\|_{2}^{2}  + 2(Am - e)^{T}Ar \\
-		& = 2\alpha \|Ar\|_{2}^{2}  - 2r^{T}Ar \\
-		\\
-		\end{aligned}
-		\end{equation}
-		
-		By setting the derivative to $0$ we find that $\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$
-		
-		
-		
-		
-	\end{lemma}
-	
-	\begin{lemma}
-		Let $A$ be a matrix and $r, e, m$ be vectors as before. 
-		
-		Then
-		
-		\begin{equation}
-		\min _{\mu_{j}}\left\|r+\mu_{j} A e_{j}\right\|_{2}
-		\end{equation}
-		
-		Has the following solution
-		
-		\begin{equation}
-		\mu_{j}=-\frac{r^{T} A e_{j}}{\left\|A e_{j}\right\|_{2}^{2}}
-		\end{equation}
-		
-		Proof
-		\\
-		We can use verbatim the proof of lemma 1.
-	\end{lemma}
-	
-	\newpage
-	
-	\section{SPAI}
-	
-	The goal is to efficiently find a sparse inverse of $A$, 
-	
-	\begin{equation}
-	\|A M-I\|_{F}^{2}=\sum_{k=1}^{n}\left\|(A M-I) e_{k}\right\|_{2}^{2}
-	\end{equation}
-	
-	i.e. n independent least squares
-	
-	
-	\begin{equation}
-	\min _{m_{k}}\left\|A m_{k}-e_{k}\right\|_{2}, \quad k=1, \ldots, n
-	\end{equation}
-	
-	
-	How to compute sparsity structure 
-	
-	Now let \(\mathcal{J}\) be the set of indices \(j\) such that \(m_{k}(j) \neq 0\) We denote the reduced vector of unknowns \(m_{k}(\mathcal{J})\) by \(\hat{m}_{k} .\) Next, let \(\mathcal{I}\) be the set of
-	indices \(i\) such that \(A(i, \mathcal{J})\) is not identically zero. This enables us to eliminate all zero rows in the submatrix \(A( ., \mathcal{J}) .\) We denote the resulting submatrix \(A(\mathcal{I}, \mathcal{J})\) by by
-	\(\hat{A}\) . Similarly, we define \(\hat{e}_{k}=e_{k}(\mathcal{I}) .\) If we now set \(n_{1}=|\mathcal{I}|\) and \(n_{2}=|\mathcal{J}|,\) we see that
-	solving \((4)\) for \(m_{k}\) is equivalent to solving
-	
-	\begin{equation}
-	\min _{\hat{m}_{k}}\left\|\hat{A} \hat{m}_{k}-\hat{e}_{k}\right\|_{2}
-	\end{equation}
-	
-	
-	
-	\begin{equation}
-	\hat{A}=Q\left(\begin{array}{l}{R} \\ {0}\end{array}\right)
-	\end{equation}
-	
-	where \(R\) is a nonsingular upper triangular \(n_{2} \times n_{2}\) matrix. If we let \(\hat{c}=Q^{T} \hat{e}_{k},\) the
-	solution of  is
-	
-	\begin{equation}
-	\hat{m}_{k}=R^{-1} \hat{c}\left(1 : n_{2}\right)
-	\end{equation}
-	
-	Solve (5) for every column of M to get an approximate inverse. The next 
-	step is to increase the sparsity structure to improve upon the previous solution.
-	
-	The idea is to add indices that will lead to best reduction in error. We recall that the current error is \(\|A M-I\|_{F},\), in other words to \(\left\|A m_{k}-e_{k}\right\|_{2}\) for each \(k=1, \ldots, n .\) We recall that \(m_{k}\) is the optimal solution of the least squares problem (4), and we denote its residual by
-	
-	\begin{equation}
-	r=A( ., \mathcal{J}) \hat{m}_{k}-e_{k}
-	\end{equation}
-	
-	must be included in \(\mathcal{L}\) since \(r(k)\) is then equal to \(-1 .\) To every \(\ell \in \mathcal{L}\) corresponds an
-	index set \(\mathcal{N}_{\ell},\) which consists of the indices of the nonzero elements of \(A(\ell, .)\) that are
-	
-	
-	\begin{equation}
-	\tilde{\mathcal{J}}=\bigcup_{\ell \in \mathcal{L}} \mathcal{N}_{\ell}
-	\end{equation}
-	
-	\begin{equation}
-	\tilde{\mathcal{J}}=\bigcup_{\ell \in \mathcal{L}} \mathcal{N}_{\ell}
-	\end{equation}
-	
-	\begin{equation}
-	\min _{\mu_{j}}\left\|r+\mu_{j} A e_{j}\right\|_{2}
-	\end{equation}
-	
-	\begin{equation}
-	\mu_{j}=-\frac{r^{T} A e_{j}}{\left\|A e_{j}\right\|_{2}^{2}}
-	\end{equation}
-	
-	\begin{equation}
-	\rho_{j}^{2}=\|r\|_{2}^{2}-\frac{\left(r^{T} A e_{j}\right)^{2}}{\left\|A e_{j}\right\|_{2}^{2}}
-	\end{equation}
-	
-	\begin{equation}
-	0=r(\mathcal{L})^{T} A(\mathcal{L}, \tilde{\mathcal{J}})=r(\mathcal{L})^{T} A(\mathcal{L}, \mathcal{J} \cup \tilde{\mathcal{J}})
-	\end{equation}
-	
-	\newpage
+\section{SPAI}
+
+The goal is to efficiently find a sparse inverse of $A$, the SPAI algorithm does so by minimizing the Frobenious norm as it is more tractable and it also leads to inherent parallelism given that the columns of $M$ are independent of one another.
+
+\begin{equation}
+\|A M-I\|_{F}^{2}=\sum_{k=1}^{n}\left\|(A M-I) e_{k}\right\|_{2}^{2}
+\end{equation}
+
+Hence, it suffices to solve the following problem independently for each $k$
+
+
+\begin{equation}
+\min _{m_{k}}\left\|A m_{k}-e_{k}\right\|_{2}, \quad k=1, \ldots, n
+\end{equation}
+
+
+We define the following objects as is done in the original paper. (To take advantage of the sparsity of A)\\
+
+Let \(\mathcal{J}\) be the set of indices \(j\) such that \(m_{k}(j) \neq 0\) We denote the reduced vector of unknowns \(m_{k}(\mathcal{J})\) by \(\hat{m}_{k} .\) Next, let \(\mathcal{I}\) be the set of
+indices \(i\) such that \(A(i, \mathcal{J})\) is not identically zero. This enables us to eliminate all zero rows in the submatrix \(A( ., \mathcal{J}) .\) We denote the resulting submatrix \(A(\mathcal{I}, \mathcal{J})\) by by
+\(\hat{A}\) . Similarly, we define \(\hat{e}_{k}=e_{k}(\mathcal{I}) .\) If we now set \(n_{1}=|\mathcal{I}|\) and \(n_{2}=|\mathcal{J}|,\) we see that
+solving \((4)\) for \(m_{k}\) is equivalent to solving
+
+\begin{equation}
+\min _{\hat{m}_{k}}\left\|\hat{A} \hat{m}_{k}-\hat{e}_{k}\right\|_{2}
+\end{equation}
+
+
+
+\begin{equation}
+\hat{A}=Q\left(\begin{array}{l}{R} \\ {0}\end{array}\right)
+\end{equation}
+
+where \(R\) is a nonsingular upper triangular \(n_{2} \times n_{2}\) matrix. If we let \(\hat{c}=Q^{T} \hat{e}_{k},\) the
+solution of  is
+
+\begin{equation}
+\hat{m}_{k}=R^{-1} \hat{c}\left(1 : n_{2}\right)
+\end{equation}
+
+Solve (5) for every column of M to get an approximate inverse. The next 
+step is to increase the sparsity structure to improve upon the previous solution.
+
+The idea is to add indices that will lead to best reduction in error. We recall that the current error is \(\|A M-I\|_{F},\), in other words to \(\left\|A m_{k}-e_{k}\right\|_{2}\) for each \(k=1, \ldots, n .\) We recall that \(m_{k}\) is the optimal solution of the least squares problem (4), and we denote its residual by
+
+\begin{equation}
+r=A( ., \mathcal{J}) \hat{m}_{k}-e_{k}
+\end{equation}
+
+must be included in \(\mathcal{L}\) since \(r(k)\) is then equal to \(-1 .\) To every \(\ell \in \mathcal{L}\) corresponds an
+index set \(\mathcal{N}_{\ell},\) which consists of the indices of the nonzero elements of \(A(\ell, .)\) that are
+
+
+\begin{equation}
+\tilde{\mathcal{J}}=\bigcup_{\ell \in \mathcal{L}} \mathcal{N}_{\ell}
+\end{equation}
+
+We choose the best move
+
+\begin{equation}
+\min _{\mu_{j}}\left\|r+\mu_{j} A e_{j}\right\|_{2}
+\end{equation}
+
+To find the optimal step, we differentiate and set the derivative to 0. 
+
+\begin{equation}
+\begin{aligned}
+\frac{\partial \left\|r+\mu_{j} A e_{j}\right\|_{2}}{\partial \mu_{j}} 
+& = 2r^{T} A e_{j} + 2\mu_{j}\|A e_{j}\|_{2}^{2}\\
+\end{aligned}
+\end{equation}
+
+Setting the derivative to $0$ yields
+
+\begin{equation}
+\mu_{j}=-\frac{r^{T} A e_{j}}{\left\|A e_{j}\right\|_{2}^{2}}
+\end{equation}
+
+\begin{equation}
+\rho_{j}^{2}=\|r\|_{2}^{2}-\frac{\left(r^{T} A e_{j}\right)^{2}}{\left\|A e_{j}\right\|_{2}^{2}}
+\end{equation}
+
+\begin{equation}
+0=r(\mathcal{L})^{T} A(\mathcal{L}, \tilde{\mathcal{J}})
+\end{equation}
+
+\newpage
 	
 	
 \section{The Grote and Huckle theorem}
@@ -349,6 +358,133 @@ Since the singular values of $AM$ are the square roots of the eigenvalues of $A 
 Finally, applying Lemma 3 to the matrix $ A M M^{T} A^{T} $ instead of $ A M$ we conclude that the singular values are indeed clustered at 1 and lie inside the interval \([\sqrt{1-\delta}, \sqrt{1+\delta}]\).
 \end{proof}
 
+
+\begin{section}{MR algorithm}
+	
+	The minimal residual iteration (aka MR) also attempts to find an approximate sparse inverse via minimizing the Frobenius norm.
+	
+	As in SPAI, it solves each column of $M$ independently. For each column we run $n_{i}$ iterations on a descent method that minimizes that iteratively minimizes the residual while also performing numerical dropping to enforce sparsity in $M$.
+	
+	First initialise $M$, for example $M = \alpha Id$ or $M = A^{T}$.
+	Then for $n_{i}$ iterations update $m{j}$ as follows ...
+	
+	\begin{equation}
+	\begin{array}{l}{r_{j} :=e_{j}-A m_{j}} \\ {\alpha_{j} :=\frac{\left(r_{j}, A r_{j}\right)}{\left(A r_{j}, A r_{j}\right)}} \\ {m_{j} :=m_{j}+\alpha_{j} r_{j}} \\ {\text {Apply numerical dropping to } m_{j}}\end{array}
+	\end{equation}
+	see proof of step bellow
+	
+Numerical dropping ....
+
+\begin{equation}
+\rho_{i j}=-2 m_{i j}\left(e_{i}, A^{T} r_{j}\right)+m_{i j}^{2}
+\end{equation}
+
+keep the  lfil elements that have the largest $\left|\rho_{i j}\right|$
+
+Proof here of step
+
+Let $A$ be a matrix and $r, e, m$ be vectors s.t. $r = e - Am$. If we want to minimize the norm of $\hat{r}$; where $\hat{r} = e - A\hat{m}$, s.t. $\hat{m}$ lies along the path $m + \alpha r$. \\
+Then, the optimal step size is $\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$
+\\\\
+Proof 
+\\\\
+We compute the gradient of $\|\hat{r}\|_{2}$ w.r.t. $\alpha$ to find the optimum step size. 
+
+
+
+
+\begin{equation}
+\begin{aligned}
+\frac{\partial \|\hat{r} \|_{2}^{2}}{\partial \alpha} 
+& = \frac{\partial \|e - A\hat{m}\|_{2}^{2}}{\partial \alpha} \\
+& = \frac{\partial \|e - A(m + \alpha r)\|_{2}^{2}}{\partial \alpha} \\
+& = 2\alpha \|Ar\|_{2}^{2}  + 2(Am)^{T}Ar - 2e^{T}Ar \\
+& = 2\alpha \|Ar\|_{2}^{2}  + 2(Am - e)^{T}Ar \\
+& = 2\alpha \|Ar\|_{2}^{2}  - 2r^{T}Ar \\
+\\
+\end{aligned}
+\end{equation}
+
+By setting the derivative to $0$ we find that $\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$
+
+
+\end{section}
+
+
+\newpage
+
+\begin{section}{Experiments}
+	\centering
+	\begin{tabular}{|c||c|c|c|c|c|}
+		\hline
+		$\varepsilon$ &    $||AM-I||_F$ &  $||AM-I||_2$ &   $||AM-I||_1$ &  $\operatorname{cond}_2(AM)$ &   $\frac{{nz}(M)}{{nz}(a)}$ \\
+		\hline \hline
+		0.60 & 14.26 &  1.02  &  1.22 & 1989.98  &  0.32 \\
+		\hline
+		0.50 & 11.29 &  1.08  &  1.56 & 210.79  &  0.61 \\
+		\hline
+		0.40 &  8.97 &  1.05  &  1.56 & 74.15  &   0.89 \\
+		\hline
+		0.30  & 7.12  & 1.00  &  1.76 & 35.13  &  1.53 \\
+		\hline
+		0.20 &  4.81 &  0.98  &  1.72 &  12.82 &   3.41 \\
+		\hline
+	\end{tabular}
+	
+	\begin{tabular}{|c|c|}
+		\hline
+		$\varepsilon$ & Bi-CGSTAB \\
+		\hline \hline
+		0.6    &   172.5       \\     
+		0.5    &   59.5        \\    
+		0.4    &   33.5        \\    
+		0.3    &   29.5        \\    
+		0.2    &   15.5 \\
+		\hline
+	\end{tabular}
+	
+\end{section}
+\clearpage
+\section{Appendix}
+
+\subsection{Orthonal invariance of the Frobenius norm}\label{sec:ortho}
+Let us consider a matrix $R$ and on applying orthogonal matrices on both sides in the form of $QRQ^{T}$. We show that the Frobenius norm remains invariant to such an orthogonal transformation. \\
+
+The following chain of equalities follows by using the orthogonality of
+Q as well as the cyclical property of the trace.
+\begin{equation}
+\begin{aligned}
+\|QRQ^{T} \|_{F}^{2}
+& =  tr((QRQ^{T})^{T}QRQ^{T}) \\
+& =  tr(QR^{T}Q^{T}QRQ^{T}) \\
+& =  tr(QR^{T}RQ^{T}) \\
+& =  tr(R^{T}RQ^{T}Q) \\
+& =  tr(R^{T}R) \\
+& =  \|R\|_{F}^{2} 
+\end{aligned}
+\end{equation}
+	
+\subsection{Some corollaries of the Cauchy Schwartz inequality} \label{sec:csi}
+
+Cauchy Schwartz states that:
+
+\begin{equation}
+\langle\,x,y\rangle \leq \|x\|_{2}\|y\|_{2}
+\end{equation}
+
+By choosing $y$ judiciously we get the two following additional inequalities.
+\\
+Let $x = (x_{1}, ..., x_{n})$ and $y = (1, 1, ..., 1)$
+
+\begin{equation}
+\sum_{i=1}^{n} x_{i} = \langle\,x,y\rangle  \leq  \|x\|_{2}\|y\|_{2} = \sqrt{n}\|x\|_{2}
+\end{equation}
+
+We can improve the inequality by choosing $y_{i} = sign(x_{i})$. 
+
+\begin{equation}
+\sum_{i=1}^{n} \left|x_{i}\right| =  \|x\|_{1}\leq \sqrt{n}\|x\|_{2}
+\end{equation}	
 
 %TODO
 % Make it lemma 1.1 and 1.2 and so on! 
