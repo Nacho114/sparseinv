@@ -46,7 +46,7 @@ for i = 1:nb_err_thresh
 
 end
 
-fileID = fopen('grotehuckle_table2.txt', 'w');
+fileID = fopen('../results/grotehuckle_table2.txt', 'w');
 
 fprintf(fileID, '%6s %6s %6s %6s %6s %13s \n', criteria);
 fprintf(fileID, '%6.2f %6.2f %6.2f  %6.2f  %6.2f  %6.2f\n', [err_thresh_list' criteria_values(1,:)' criteria_values(2, :)' criteria_values(3,:)'  criteria_values(4,:)' criteria_values(5,:)' ]');  
