@@ -14,7 +14,7 @@ normalize=true;
 % prevents nan
 eps = 1e-8;
 debug = false;
-outer_max_iter = 5;
+outer_max_iter = 1;
 lfil = 10;
 use_par = true;
 alpha=1;

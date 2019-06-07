@@ -24,7 +24,7 @@ end
 
 b = A*ones(dim, 1);
 
-fileID = fopen('results_benzi_tuma_table4.txt', 'w');
+fileID = fopen('../results/results_benzi_tuma_table4.txt', 'w');
 fprintf(fileID, 'Results at error_threshold (eps) for various BICGSTAB tolerance are as follows\n\n\n');
 
 for i = 1:nb_err_thresh

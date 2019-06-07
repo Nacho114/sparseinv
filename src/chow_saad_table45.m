@@ -75,7 +75,7 @@ for dataset = datasets
     idx = idx + 1;
 end
 
-fileID = fopen('chow_saad_table45_result.txt', 'w');
+fileID = fopen('../results/chow_saad_table45_result.txt', 'w');
 
 fprintf(fileID, 'iter\n');
 

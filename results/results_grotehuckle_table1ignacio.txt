@@ -1,0 +1,6 @@
+error_thres (eps)       iterations           relres
+             0.6            166.5            7e-09
+             0.5             57.0            9e-09
+             0.4             33.5            9e-09
+             0.3             29.5            9e-09
+             0.2             15.5            7e-09
