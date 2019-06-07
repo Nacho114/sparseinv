@@ -344,13 +344,24 @@ Now, with these lemma's in place let's get back to proving the original theorem.
 
 Since the singular values of $AM$ are the square roots of the eigenvalues of $A M M^{T} A^{T} $, 
 
-\begin{equation}
-\left\|I-A M M^{T} A^{T}\right\|_{2}=\left\|I+(I-A M) M^{T} A^{T}-M^{T} A^{T}\right\|_{2}
-\end{equation}
 
-\begin{equation}
-\sqrt{n} \varepsilon\left(1+\|A M\|_{2}\right) \leq \sqrt{n} \varepsilon\left(1+\|A M-I+I\|_{2}\right) \leq \sqrt{n} \varepsilon(2+\sqrt{n} \varepsilon)
-\end{equation}
+\begin{align}
+\left\|I-A M M^{T} A^{T}\right\|_{2} &= \left\|I+(I-A M) M^{T} A^{T}-M^{T} A^{T}\right\|_{2} \\ & =\left\|(I-A M)^{T} + (I-A M)M^{T}A^{T}\right\|_{2}
+\end{align}
+\\
+Next we use the triangle inequality as well as the sub-multiplicativity of the 2-norm.
+\\
+\begin{align}
+\left\|(I-A M)^{T} + (I-A M)M^{T}A^{T}\right\|_{2}
+& \leq \left\|I-A M\right\|_{2} + \left\|I-A M\right\|_{2}\left\|AM\right\|_{2} \\
+& \leq \sqrt{n} \varepsilon\left(1+\|A M\|_{2}\right)
+\end{align}
+
+Rewriting the right hand side as follows: 
+\begin{align}
+\sqrt{n} \varepsilon\left(1+\|A M-I+I\|_{2}\right) &\leq \sqrt{n} \varepsilon\left(1+1+\|A M-I\|_{2}\right) \\
+&= \sqrt{n} \varepsilon\left(2 +\|A M-I\|_{2}\right)  \leq \sqrt{n} \varepsilon(2+\sqrt{n} \varepsilon)
+\end{align}
 
 \begin{equation}
 \operatorname{cond}_{2}(A M) \leq \sqrt{\frac{1+\delta}{1-\delta}}
