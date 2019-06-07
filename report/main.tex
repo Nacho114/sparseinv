@@ -81,7 +81,7 @@
 	
 	
 	The objective is to construct a sparse approximate preconditioner M for a given sparse matrix A. More specifically, we look for a right preconditioner M such that $\|I-A M\|_{F}$ is minimized. 
-	We derive one of the most successful general-purpose methods for achieving this tasks is SPAI by Grote and Huckle \cite{grote} and provide a detailed proof of their key theorem. Further, we perform empirical experiments and reproduce the results in their paper. Also, we verify the performance of the preconditioners when used together with a linear system solver (like BICGSTAB). Lastly, we discuss another variant of sparse approximate inverse (MR) and illustrate it numerically on matrices arising in various applications.
+	We derive one of the most successful general-purpose methods for achieving these tasks, i.e. SPAI by Grote and Huckle \cite{grote}, and provide a detailed proof of their key theorem. Further, we perform empirical experiments and reproduce the results in their paper. Also, we verify the performance of the preconditioners when used together with a linear system solver (like BICGSTAB). Lastly, we discuss another variant of the sparse approximate inverse (MR) and illustrate it numerically on matrices arising in various applications.
 
 \end{abstract}
 
@@ -146,7 +146,7 @@
 	
 \section{SParse Approximate Inverse (SPAI)}
 
-\paragraph{Problem description.} The aim of SPAI \cite{grote} is to find a parallel preconditioner for the solution of linear system of equations. This is achieved by explicitly finding a sparse approximate inverse of $A$, which is later applied as a preconditioner for an iterative method like BICGSTAB or GMRES. The SPAI algorithm  does so by minimizing the Frobenius norm since this choice leads to inherent parallelism as the columns of  $M$ are independent of one another (see equation \eqref{eq:frob}) and is more tractable in comparison to minimizing the 1-norm or 2-norm.
+\paragraph{Problem description.} The aim of SPAI \cite{grote} is to find a parallel preconditioner for the solution of a linear system of equations. This is achieved by explicitly finding a sparse approximate inverse of $A$, which is later applied as a preconditioner for an iterative method like BICGSTAB or GMRES. The SPAI algorithm  does so by minimizing the Frobenius norm since this choice leads to inherent parallelism as the columns of  $M$ are independent of one another (see equation \eqref{eq:frob}) and is more tractable in comparison to minimizing the 1-norm or 2-norm.
 
 \begin{equation}\label{eq:frob}
 \|A M-I\|_{F}^{2}=\sum_{k=1}^{n}\left\|(A M-I) e_{k}\right\|_{2}^{2}, 
@@ -209,7 +209,7 @@ If $r = 0$, then we have exactly the $k_{th}$ column of $A^{-1}$. So  assume $r 
 \tilde{\mathcal{J}}=\bigcup_{\ell \in \mathcal{L}} \mathcal{N}_{\ell}
 \end{equation}
 
-In order to find the best candidates, for every \(j \in \tilde{\mathcal{J}}\) we compute the following one dimensional minimization problem, that minimizes the residual based on adding index $j$.
+In order to find the best candidates, for every \(j \in \tilde{\mathcal{J}}\) we compute the following one-dimensional minimization problem, that minimizes the residual based on adding index $j$.
 
 \begin{equation}\label{eq:ls}
 \min _{\mu_{j}}\left\|r+\mu_{j} A e_{j}\right\|_{2}
@@ -431,7 +431,7 @@ Here, our objective is to reproduce the results of SPAI (c.f. Figure \ref{fig:gr
 
 
 \subsection{Performance with linear system solvers}
-Next, we aim to verify the numerical results when the preconditioner is used along with a linear system solver, in particular BICGSTAB. We compare the number of iterations\footnote{Note that MATLAB implementation of BICGSTAB sometimes reports fractional iterations to indicate ``convergence half way through an iteration''} required by BICGTSTAB for convergence, the results of which can be found in Table \ref{tab:grote1}. 
+Next, we aim to verify the numerical results when the preconditioner is used along with a linear system solver, in particular, BICGSTAB. We compare the number of iterations\footnote{Note that MATLAB implementation of BICGSTAB sometimes reports fractional iterations to indicate ``convergence halfway through an iteration''} required by BICGTSTAB for convergence, the results of which can be found in Table \ref{tab:grote1}. 
 \begin{table}[h]
 	\centering
 	\begin{tabular}{@{}ccc@{}}
@@ -445,11 +445,11 @@ Next, we aim to verify the numerical results when the preconditioner is used alo
 		0.2    &   15.5 & 18 \\
 		\bottomrule
 	\end{tabular}
-	\caption{}
+	\caption{Iteration required for BICGSTAB convergence when preconditioned with different amounts ($\varepsilon$)}
 	\label{tab:grote1}
 \end{table}
 
-We observe that we get better results, i.e., lower number of iterations to converge. This is probably because of the improvements in implementation of the solver over time. \\
+We observe that we get better results, i.e., a lower number of iterations to converge. This is probably because of the improvements in the implementation of the solver over time. \\
 
 Additionally, we compare to results from Benzi and Tuma \cite{benzi} for a similar set of experiments on the performance of the preconditioner with a linear system solver (BICGSTAB again). The authors \cite{benzi} report results on two datasets: 3DCD and Memplus, but the former is not publicly available. Hence, we stick to Memplus and the results of which can be found in Table \ref{tab:benzi}.
 
@@ -475,14 +475,14 @@ Additionally, we compare to results from Benzi and Tuma \cite{benzi} for a simil
 
 An important practical aspect that we couldn't find from the paper was the value of BICGSTAB tolerance employed by them. Hence, we show the results at various values of this tolerance, and we find that for $1e-16$ the results closely match and for values larger than that BICGSTAB converges much faster. 
 
-\paragraph{Summary.} Hence, we find that the results of SPAI can be reproduced fairly well across various experimemts. 
+\paragraph{Summary.} Hence, we find that the results of SPAI can be reproduced fairly well across various experiments. 
 \end{section}
 \newpage
 \begin{section}{MR algorithm}
 	
 	Chow and Saad \cite{chow} also propose an algorithm based on minimal residual iterations (aka MR) to find a sparse approximate inverse via minimizing the Frobenius norm.\\
 	
-	Like SPAI \cite{grote} (which also aims to minimize Frobenius norm), this algorithm considers each column of $M$ independently. Thus, for each column it runs $n_{i}$ iterations to minimize the residual, similar in spirit to a descent method, while also performing numerical dropping to enforce sparsity in $M$. 
+	Like SPAI \cite{grote} (which also aims to minimize Frobenius norm), this algorithm considers each column of $M$ independently. Thus, for each column, it runs $n_{i}$ iterations to minimize the residual, similar in spirit to a descent method, while also performing numerical dropping to enforce sparsity in $M$. 
 	
 	\subsection{Derivation of MR}
 	
@@ -495,7 +495,7 @@ An important practical aspect that we couldn't find from the paper was the value
 	r_{j} :=e_{j}-A m_{j}, \quad \text{and} \quad \hat{m}_{j} :=m_{j}+\alpha_{j} r_{j}.
 	\end{equation}
 
-	Then, the update $\hat{m}_{j}$ is carried out in the direction of $r_j$ (the current residual), so as to minimize the resulting residual at next step. This involves solving a one-dimensional optimization problem to compute the optimal step size $\alpha_{j}$. This procedure is then repeated until $j = n_{i}$ and  is the gist of the algorithm, besides the numerical dropping discussed later. 
+	Then, the update $\hat{m}_{j}$ is carried out in the direction of $r_j$ (the current residual), so as to minimize the resulting residual at the next step. This involves solving a one-dimensional optimization problem to compute the optimal step size $\alpha_{j}$. This procedure is then repeated until $j = n_{i}$ and  is the gist of the algorithm, besides the numerical dropping discussed later. 
 	
 	\begin{lemma}
 Under the update rule $\hat{m}_{j} :=m_{j}+\alpha_{j} r_{j}$, 	the optimal step size $\alpha_{j}$ with respect to the next residual is 
@@ -539,7 +539,7 @@ Under the update rule $\hat{m}_{j} :=m_{j}+\alpha_{j} r_{j}$, 	the optimal step 
 
 	%Here, the $\rho_{i j}$ measures the amount of reduction in the residual by considering entry $i$. We then keep the $\text{lfil}$ entries which result in the maximum decrease.
 
-The reasoning for having such a criteria is based on the following equation \eqref{eq:pert} derived via a perturbation analysis.
+The reasoning for having such a criterion is based on the following equation \eqref{eq:pert} derived via a perturbation analysis.
 Consider that $\left\|\hat{r}_{j}\right\|_{2}^{2}$ denotes the residual of a perturbed $\hat{m}_{j} = m_j + d$, where $d = m_{ij} e_j$.
 
 \begin{equation}\label{eq:pert}
@@ -557,7 +557,10 @@ This intuitively means that $\rho_{i j}$ measures the amount of reduction in the
 \newpage
 
 \begin{section}{Experiments: MR}
-	
+
+The goal of these experiments was to check the performance of SPAI preconditioner when used along with GMRES(20).	As the sparsity structure, we use the scaled transpose (i.e., $\alpha A^{T}$ ) as mentioned in the Chow and Saad \cite{chow}. However, the particular value of $\alpha$ used in these experiments was not clear. Our results for $\alpha =1 $ can be found in Table \ref{tab:chow}. \\
+
+We guess this to be the main reason for the deviation with the results from \cite{chow}. Also, as in their table, we observe that SAYRL3 and SHERMAN1 converge in very similar iterations.  We notice that as the number of outer iterations for SPAI increases, the matrix is better preconditioned and thus converges at a lower amount of iterations. Both our and original results show this trend, but one concern might be that in case of SHERMAN3 for 3 outer iterations (as the number of iterations to convergence increases). \newline
 
 \begin{table}[h]
 	\centering
@@ -577,7 +580,7 @@ This intuitively means that $\rho_{i j}$ measures the amount of reduction in the
 & SAYLR3 & & & 223 & 188 & 96 & 74 & 60  \\
 	\bottomrule
 	\end{tabular}
-	\caption{}
+	\caption{Results showing number of iterations required for GMRES(20) to converge as the number of outer iterations ($n_0$) varies from 1 to 5.}
 \label{tab:chow}
 \end{table}
 % Please add the following required packages to your document preamble:
@@ -585,6 +588,9 @@ This intuitively means that $\rho_{i j}$ measures the amount of reduction in the
 
 
 \end{section}
+
+\section{Conclusion}
+In the end, we see how SPAI can serve as a useful preconditioner while being easy to parallelize and implement. We have looked at both the theoretical and practical aspects underlying SPAI and MR.  Both these methods are fairly well reproducible and all the results for the various tables can be computed with the attached implementation.
 
 \clearpage
 \bibliographystyle{unsrt}
