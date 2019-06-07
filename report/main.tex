@@ -83,11 +83,7 @@
 	In this project, the aim is to construct a sparse preconditioner M for a given sparse matrix A. More specifically, we look for a right preconditioner M such that $\|I-A M\|_{F}$ is minimized. \\
 	One of the most successful general-purpose methods for achieving this tasks is SPAI by Grote and Huckle \cite{grote}. We will derive their algorithm along with a theorem 
 	
-	
-	\section{Introduction}
-	
-	intro of sparse inverse problem
-	
+
 	\newpage
 	
 %	\section{Prelude: A small lemma}
@@ -149,7 +145,7 @@
 	
 \section{SPAI}
 
-The goal is to efficiently find a sparse inverse of $A$, the SPAI algorithm does so by minimizing the Frobenius norm as it is more tractable and it also leads to inherent parallelism given that the columns of $M$ are independent of one another.
+The goal is to efficiently find a sparse inverse of $A$, the SPAI algorithm \cite{grote} does so by minimizing the Frobenious norm as it is more tractable and it also leads to inherent parallelism given that the columns of $M$ are independent of one another.
 
 \begin{equation}
 \|A M-I\|_{F}^{2}=\sum_{k=1}^{n}\left\|(A M-I) e_{k}\right\|_{2}^{2}
@@ -162,13 +158,22 @@ Hence, it suffices to solve the following problem independently for each $k$
 \min _{m_{k}}\left\|A m_{k}-e_{k}\right\|_{2}, \quad k=1, \ldots, n
 \end{equation}
 
+SPAI is an iterative method as we will see; We will choose a starting $M$, for example $M = I$ (Where $I$ is the identity matrix). We then iteratively improve the columns while trying to preserve the sparsity of $M$. 
 
-We define the following objects as is done in the original paper. (To take advantage of the sparsity of A)\\
+Following the convention of the original paper, we define the following objects. 
 
-Let \(\mathcal{J}\) be the set of indices \(j\) such that \(m_{k}(j) \neq 0\) We denote the reduced vector of unknowns \(m_{k}(\mathcal{J})\) by \(\hat{m}_{k} .\) Next, let \(\mathcal{I}\) be the set of
-indices \(i\) such that \(A(i, \mathcal{J})\) is not identically zero. This enables us to eliminate all zero rows in the submatrix \(A( ., \mathcal{J}) .\) We denote the resulting submatrix \(A(\mathcal{I}, \mathcal{J})\) by by
-\(\hat{A}\) . Similarly, we define \(\hat{e}_{k}=e_{k}(\mathcal{I}) .\) If we now set \(n_{1}=|\mathcal{I}|\) and \(n_{2}=|\mathcal{J}|,\) we see that
-solving \((4)\) for \(m_{k}\) is equivalent to solving
+\begin{itemize}
+	\item Let \(\mathcal{J}\) be the set of indices \(j\) such that \(m_{k}(j) \neq 0\) 
+	\item We denote the reduced vector of unknowns \(m_{k}(\mathcal{J})\) by \(\hat{m}_{k}\)
+	\item Let \(\mathcal{I}\) be the set of
+	indices \(i\) such that \(A(i, \mathcal{J})\) is not identically zero
+	\item Denote \(A(\mathcal{I}, \mathcal{J})\) by \(\hat{A}\), the resulting submatrix
+	\item Define \(\hat{e}_{k}=e_{k}(\mathcal{I}) .\)
+	\item Set \(n_{1}=|\mathcal{I}|\) and \(n_{2}=|\mathcal{J}|,\)
+	
+\end{itemize}
+
+Based on these definitions, we can now solve the equivalent -- much smaller -- problem 
 
 \begin{equation}
 \min _{\hat{m}_{k}}\left\|\hat{A} \hat{m}_{k}-\hat{e}_{k}\right\|_{2}
@@ -180,31 +185,38 @@ solving \((4)\) for \(m_{k}\) is equivalent to solving
 \hat{A}=Q\left(\begin{array}{l}{R} \\ {0}\end{array}\right)
 \end{equation}
 
-where \(R\) is a nonsingular upper triangular \(n_{2} \times n_{2}\) matrix. If we let \(\hat{c}=Q^{T} \hat{e}_{k},\) the
-solution of  is
+Where \(R\) is a nonsingular upper triangular \(n_{2} \times n_{2}\) matrix that we get from the QR decomposition. If we let \(\hat{c}=Q^{T} \hat{e}_{k},\) the
+solution of the least squares problem is
 
 \begin{equation}
 \hat{m}_{k}=R^{-1} \hat{c}\left(1 : n_{2}\right)
 \end{equation}
 
-Solve (5) for every column of M to get an approximate inverse. The next 
-step is to increase the sparsity structure to improve upon the previous solution.
 
-The idea is to add indices that will lead to best reduction in error. We recall that the current error is \(\|A M-I\|_{F},\), in other words to \(\left\|A m_{k}-e_{k}\right\|_{2}\) for each \(k=1, \ldots, n .\) We recall that \(m_{k}\) is the optimal solution of the least squares problem (4), and we denote its residual by
+We solve this least square problem for every column to get an approximate inverse. The next step is to augment the sparsity structure to improve our previous solution.
 
+
+A natural choice is to add indices that will yield the best reduction in error.
+In particular, for each column we want to find new indices to further reduce the error \(\left\|A m_{k}-e_{k}\right\|_{2}\).
+
+
+The residual that which to reduce is the following
 \begin{equation}
 r=A( ., \mathcal{J}) \hat{m}_{k}-e_{k}
 \end{equation}
 
-must be included in \(\mathcal{L}\) since \(r(k)\) is then equal to \(-1 .\) To every \(\ell \in \mathcal{L}\) corresponds an
-index set \(\mathcal{N}_{\ell},\) which consists of the indices of the nonzero elements of \(A(\ell, .)\) that are
+
+If $r = 0$, then we are done, $m_{k}$ is exactly the $k_{th}$ column of $A^{-1}$. Let us thus assume $r \neq 0$. 
+
+
+Let $\mathcal{L}$ be the indices in $r$ s.t. $r(i) \neq 0$. For every $ \ell \in \mathcal{L} $ we look at all nonzero elements of $A(\ell,.)$ that are not in $\mathcal{J}$ yet. We denote the collection these points as \(\mathcal{N}_{\ell}\). By taking the union we have now at our disposal a set of potential candidates to add to $\mathcal{J}$.
 
 
 \begin{equation}
 \tilde{\mathcal{J}}=\bigcup_{\ell \in \mathcal{L}} \mathcal{N}_{\ell}
 \end{equation}
 
-We choose the best move
+To find the best candidates for every \(j \in \tilde{\mathcal{J}}\) we compute the following 1-D minimization problem. I.e. minimize the residual based based on updating at index $j$.
 
 \begin{equation}
 \min _{\mu_{j}}\left\|r+\mu_{j} A e_{j}\right\|_{2}
@@ -225,13 +237,23 @@ Setting the derivative to $0$ yields
 \mu_{j}=-\frac{r^{T} A e_{j}}{\left\|A e_{j}\right\|_{2}^{2}}
 \end{equation}
 
+For every such $j$ we also compute the new residual norm (i.e. of $r+\mu_{j} A e_{j}$), which we do based on the optimal step that we just found. This yields
+
 \begin{equation}
 \rho_{j}^{2}=\|r\|_{2}^{2}-\frac{\left(r^{T} A e_{j}\right)^{2}}{\left\|A e_{j}\right\|_{2}^{2}}
 \end{equation}
 
+Finally, note that there must exist at least one $j$ s.t. \(r^{T} A e_{j} \neq 0\) and that yields a better residual.
+
+To see why observe the following, if they are all zero then the following happens
+
 \begin{equation}
 0=r(\mathcal{L})^{T} A(\mathcal{L}, \tilde{\mathcal{J}})
 \end{equation}
+
+\,
+
+Since \(A(\mathcal{L}, .)\) has full rank this implies that \(r(\mathcal{L})\), which would be a contradiction.
 
 \newpage
 	
@@ -311,7 +333,7 @@ The eigenvalues $\lambda_k$ of $AM$ are clustered at 1 and lie inside a circle o
 Let $Q R Q^{T}$ be a Schur decomposition of $A M-I$. Then:
 
 \begin{equation}
-\sum_{k=1}^{n}\left|1-\lambda_{k}\right|^{2} \overset{(b)}{=} \|\operatorname{diag}(R)\|_{2}^{2} \leq\|R\|_{F}^{2} \overset{(c)}{=} \|A M-I\|_{F}^{2} \leq n \varepsilon^{2}
+\sum_{k=1}^{n}\left|1-\lambda_{k}\right|^{2} \overset{(b)}{=} \|\operatorname{diag}(R)\|_{2}^{2} \leq\|R\|_{F}^{2} \overset{(c)}{=} \|A M-I\|_{F}^{2} \overset{\eqref{lem1a}}{\leq} n \varepsilon^{2}
 \end{equation}
 The first equality labeled (b) holds as $R$ and $ A M -I$ are similar matrices and thus have same eigenvalues. Note $R$ is an upper triangular matrix and contains eigenvalues on its diagonal.
 Further, (c) follows from the orthogonal invariance of the Frobenius norm and the proof of which can be found in Section \ref{sec:ortho} of the Appendix. \\
@@ -338,7 +360,7 @@ Since $ \dktil = \dk - 1 $ and $\tilde{g}_{j k} = g_{j k}$ (for $j\neq k$), from
 \left|\lambda_{k} - 1 \right| \leq \sum_{j \neq k}\, \left|\tilde{g}_{j k}\right| + \left|\dktil\right| = \sum_{j }\, \left|\tilde{g}_{j k}\right| = \|A m_k -e_k\|_{1} \overset{\eqref{l1matrix}}{\leq} \|A M-I\|_{1}
 \end{equation}
 
-Thus from the above equation \eqref{gers4} and equation \eqref{lem1c} in Lemma \ref{lma:norms}, we conclude that eigenvalues of the matrix $A M$ satisfy $ \left|\lambda_{k} - 1 \right| \leq \sqrt{p} \varepsilon$ and hence lie inside the required circle.
+The last inequality follows from the definition of 1-norm of a matrix \eqref{l1matrix}. Thus from the above equation \eqref{gers4} and equation \eqref{lem1c} in Lemma \ref{lma:norms}, we conclude that eigenvalues of the matrix $A M$ satisfy $ \left|\lambda_{k} - 1 \right| \leq \sqrt{p} \varepsilon$ and hence lie inside the required circle.
 \end{proof}
 
 
@@ -353,29 +375,29 @@ Now, with these lemma's in place let's get back to proving the original theorem.
 Since the singular values of $AM$ are the square roots of the eigenvalues of $A M M^{T} A^{T} $, 
 
 
-\begin{align}
+\begin{align}\label{eq:e1}
 \left\|I-A M M^{T} A^{T}\right\|_{2} &= \left\|I+(I-A M) M^{T} A^{T}-M^{T} A^{T}\right\|_{2} \\ & =\left\|(I-A M)^{T} + (I-A M)M^{T}A^{T}\right\|_{2}
 \end{align}
 \\
 Next we use the triangle inequality as well as the sub-multiplicativity of the 2-norm.
 \\
-\begin{align}
+\begin{align}\label{eq:e2}
 \left\|(I-A M)^{T} + (I-A M)M^{T}A^{T}\right\|_{2}
 & \leq \left\|I-A M\right\|_{2} + \left\|I-A M\right\|_{2}\left\|AM\right\|_{2} \\
-& \leq \sqrt{n} \varepsilon\left(1+\|A M\|_{2}\right)
+& \overset{\eqref{lem1b}}{\leq} \sqrt{n} \varepsilon\left(1+\|A M\|_{2}\right)
 \end{align}
 
-Rewriting the right hand side as follows: 
+Further, rewrite the right hand side of equation \eqref{eq:e2}, apply triangle inequality, and then combine with equation \eqref{eq:e1}, to get : 
 \begin{align}
-\sqrt{n} \varepsilon\left(1+\|A M-I+I\|_{2}\right) &\leq \sqrt{n} \varepsilon\left(1+1+\|A M-I\|_{2}\right) \\
-&= \sqrt{n} \varepsilon\left(2 +\|A M-I\|_{2}\right)  \leq \sqrt{n} \varepsilon(2+\sqrt{n} \varepsilon)
+\left\|I-A M M^{T} A^{T}\right\|_{2} & \leq \sqrt{n} \varepsilon\left(1+\|A M-I+I\|_{2}\right) \leq \sqrt{n} \varepsilon\left(1+1+\|A M-I\|_{2}\right) \\
+&= \sqrt{n} \varepsilon\left(2 +\|A M-I\|_{2}\right)  \overset{\eqref{lem1b}}{\leq} \sqrt{n} \varepsilon(2+\sqrt{n} \varepsilon) \overset{\text{def}}{=} \delta
 \end{align}
-
+Thus we have the bound on the condition number of the matrix $AM$ as follows: 
 \begin{equation}
-\operatorname{cond}_{2}(A M) \leq \sqrt{\frac{1+\delta}{1-\delta}}
+\operatorname{cond}_{2}(A M) = \frac{\sigma_{\text{max}}(AM)}{\sigma_{\text{min}}(AM)} =  \sqrt{\frac{\lambda_{\text{max}}(AM M^{T} A^{T})}{\lambda_{\text{min}}(AM M^{T} A^{T})}} \leq \sqrt{\frac{1+\delta}{1-\delta}}
 \end{equation}
 
-Finally, applying Lemma 3 to the matrix $ A M M^{T} A^{T} $ instead of $ A M$ we conclude that the singular values are indeed clustered at 1 and lie inside the interval \([\sqrt{1-\delta}, \sqrt{1+\delta}]\).
+Finally, applying Lemma \ref{lma:cond} to the matrix $ A M M^{T} A^{T} $ instead of $ A M$ we conclude that the singular values are indeed clustered at 1 and lie inside the interval \([\sqrt{1-\delta}, \sqrt{1+\delta}]\).
 \end{proof}
 
 \begin{section}{MR algorithm}
