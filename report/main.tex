@@ -13,6 +13,7 @@
 \usepackage{amsthm}
 
 
+
 %%% hacks
 \setlength\parindent{0pt}
 \newcommand{\horrule}[1]{\rule{\linewidth}{#1}}
@@ -42,14 +43,18 @@
 \DeclareMathOperator*{\argmin}{arg\,min}
 
 %%% envs def
-\newtheorem{lemma}{Lemma}
-\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}[section]
+%\newtheorem{theorem}{Theorem}
 \newtheorem{definition}{Definition}
-
+\newtheorem{theorem}{Theorem}[section]
 %\newtheorem{theorem}{Theorem}
 \newtheorem{corollary}{Corollary}
+
 %\newtheorem{lemma}[theorem]{Lemma}
 
+\theoremstyle{remark}
+\newtheorem*{rem}{Remark}
+\newtheorem*{bgd}{Background}
 
 \newcommand{\dk}{g_{kk}} % D_kk
 \newcommand{\dktil}{\tilde{g}_{kk}} % Dtil_kk
@@ -66,8 +71,8 @@
 	
 	\section{Abstract}
 	
-	In this project, the aim is to construct a sparse preconditioner M for a given sparse matrix A. More specifially, we look for a right preconditioner M such that $\|I-A M\|_{F}$ is minimized. \\
-	One of the most successful general-purpose methods for achiev- ing this tasks is SPAI by Grote and Huckle [3]. Improvements to the method from [3] have been described in [2]. The paper [1] provides an overview of these and similar methods.
+	In this project, the aim is to construct a sparse preconditioner M for a given sparse matrix A. More specifically, we look for a right preconditioner M such that $\|I-A M\|_{F}$ is minimized. \\
+	One of the most successful general-purpose methods for achieving this tasks is SPAI by Grote and Huckle [3]. We will derive their algorithm along with a theorem 
 	
 	
 	\section{Introduction}
@@ -76,9 +81,66 @@
 	
 	\newpage
 	
+	\section{Prelude: A small lemma}
+	
+	Before we start our journey into the sparse inverse solvers, we introduce a small lemma:
+	
+	\begin{lemma}
+		
+		Let $A$ be a matrix and $r, e, m$ be vectors s.t. $r = e - Am$. If we want to minimize the norm of $\hat{r}$; where $\hat{r} = e - A\hat{m}$, s.t. $\hat{m}$ lies along the path $m + \alpha r$. \\
+		Then, the optimal step size is $\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$
+		\\\\
+		Proof 
+		\\\\
+		We compute the gradient of $\|\hat{r}\|_{2}$ w.r.t. $\alpha$ to find the optimum step size. 
+		
+		
+		
+		
+		\begin{equation}
+		\begin{aligned}
+		\frac{\partial \|\hat{r} \|_{2}^{2}}{\partial \alpha} 
+		& = \frac{\partial \|e - A\hat{m}\|_{2}^{2}}{\partial \alpha} \\
+		& = \frac{\partial \|e - A(m + \alpha r)\|_{2}^{2}}{\partial \alpha} \\
+		& = 2\alpha \|Ar\|_{2}^{2}  + 2(Am)^{T}Ar - 2e^{T}Ar \\
+		& = 2\alpha \|Ar\|_{2}^{2}  + 2(Am - e)^{T}Ar \\
+		& = 2\alpha \|Ar\|_{2}^{2}  - 2r^{T}Ar \\
+		\\
+		\end{aligned}
+		\end{equation}
+		
+		By setting the derivative to $0$ we find that $\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$
+		
+		
+		
+		
+	\end{lemma}
+	
+	\begin{lemma}
+		Let $A$ be a matrix and $r, e, m$ be vectors as before. 
+		
+		Then
+		
+		\begin{equation}
+		\min _{\mu_{j}}\left\|r+\mu_{j} A e_{j}\right\|_{2}
+		\end{equation}
+		
+		Has the following solution
+		
+		\begin{equation}
+		\mu_{j}=-\frac{r^{T} A e_{j}}{\left\|A e_{j}\right\|_{2}^{2}}
+		\end{equation}
+		
+		Proof
+		\\
+		We can use verbatim the proof of lemma 1.
+	\end{lemma}
+	
+	\newpage
+	
 	\section{SPAI}
 	
-	Goal
+	The goal is to efficiently find a sparse inverse of $A$, 
 	
 	\begin{equation}
 	\|A M-I\|_{F}^{2}=\sum_{k=1}^{n}\left\|(A M-I) e_{k}\right\|_{2}^{2}
@@ -154,10 +216,16 @@
 	\end{equation}
 	
 	\newpage
+	
+	
+\section{The Grote and Huckle theorem}
 
-\section{Theorem 3.3}
-
-The statement of this theorem is as follows: 
+\begin{bgd} Assume $M$ is the approximate inverse of $A$ obtained from SPAI algorithm, and let $m_k$ denote the $k^{\text{th}}$ column and $r_k$ be the corresponding residual. We assume that at convergence, 
+\begin{equation}\label{eq:conv}
+\| r_k\| = \|A m_k- e_k\| \leq  \varepsilon 
+\end{equation}
+\end{bgd}
+The main theorem concerning SPAI is stated as follows: 
 %We now derive bounds for the singular values and the condition number of AM.
 \begin{theorem}
 The singular values of \(A M\) are clustered at 1 and lie inside the
@@ -171,49 +239,44 @@ condition number of \(A M\) satisfies
 
 \end{theorem}
 
-\paragraph{Remark.} We believe that there is a minor typo in the statement of the original theorem as singular values lie inside the interval  \([\sqrt{1-\delta}, \sqrt{1+\delta}],\), which is evident from the nature of the bound on the condition number. 
+\begin{rem}
+We believe that there is a minor typo in the statement of the original theorem as singular values lie inside the interval  \([\sqrt{1-\delta}, \sqrt{1+\delta}]\), which is evident from the nature of the bound on the condition number. 
+\end{rem}
 
+We first derive some useful lemma's that will be needed for the proof and recall Gershgorin's circle theorem. 
 
-\begin{lemma}
+\begin{lemma}\label{lma:norms}
 Let \(p=\max _{1 \leq k \leq n}\left\{\text { number of nonzero elements of } r_{k}\right\} .\) Then
-\begin{equation}
-\|A M-I\|_{F} \leq \sqrt{n} \varepsilon \label{lem1a}
-\end{equation}
-
-\begin{equation}
-\|A M-I\|_{2} \leq \sqrt{n} \varepsilon \label{lem1b}
-\end{equation}
-
-\begin{equation}
-\|A M-I\|_{1} \leq \sqrt{p} \varepsilon \label{lem1c}
-\end{equation}
+\begin{align}
+\|A M-I\|_{F} \leq \sqrt{n} \varepsilon \label{lem1a} \\
+\|A M-I\|_{2} \leq \sqrt{n} \varepsilon \label{lem1b} \\
+\|A M-I\|_{1}  \leq \sqrt{p} \varepsilon \label{lem1c}
+\end{align}
 \end{lemma}
 
 \begin{proof}
-
-\begin{equation}
-\|A M-I\|_{F}^{2}=\sum_{k=1}^{n}\left\|(A M-I) e_{k}\right\|_{2}^{2} \leq \sum_{k=1}^{n} \varepsilon^{2}=n \varepsilon^{2}
-\end{equation}
+\begin{align}
+\|A M-I\|_{F}^{2}=\sum_{k=1}^{n}\left\|(A M-I) e_{k}\right\|_{2}^{2} \; \overset{\eqref{eq:conv}}{\leq} \; \sum_{k=1}^{n} \varepsilon^{2}=n \varepsilon^{2}
+\end{align}
 
 \begin{align}
 \|A M-I\|_{2} &=\max _{\|x\|_{2}=1}\|(A M-I) x\|_{2} =\max _{\|x\|_{2}=1}\left\|\sum_{k=1}^{n} x_{k}(A M-I) e_{k}\right\|_{2} \\
-&\leq \max _{\|x\|_{2}=1}\|x\|_{1} \varepsilon \leq \sqrt{n} \varepsilon
+&\leq \max _{\|x\|_{2}=1}\|x\|_{1} \varepsilon \overset{(a)}{\leq} \sqrt{n} \varepsilon
 \end{align}
-
+In the above, (a) essentially follows from Cauchy-Schwarz and the detailed proof can be found in the Section \ref{sec:csi} of the Appendix.
 \begin{align}
 \|A M-I\|_{1} &\overset{\text{def}}{=}\max_{1 \leq k \leq n}\left\|A m_k - e_k\right\|_{1} \label{l1matrix} \\
 &\leq \sqrt{p} \max_{1 \leq k \leq n}\left\|A m_k - e_k\right\|_{2} 
 \end{align}
-
+The last inequality comes from utilizing the fact that $r_k = A m_k -e_k$ has atmost $p$ non-zero elements, along with Cauchy-Schwarz like proof of (a).
 
 \end{proof}
 
-\begin{lemma}
+\begin{lemma}[Gershgorin, 1931]\label{lma:gersh}
 	
-Gershgorin's Theorem
-%Let A be an n x n matrix 
+Let A be an $n \times n$ matrix with entries in $\mathbb{C}$. The eigenvalues of $A$ belong to the union of Gershgorin disks $(D_i)_{i=1}^n$,
 \begin{equation}\label{gers1}
-D_{i}=\left\{z \in \mathbb{C} \, | \, | z-a_{i i} | \leq R_{i}\right\}, \text{where} \; R_{i}=\sum_{j \neq i}\, \left|a_{i j}\right|
+D_{i}=\left\{z \in \mathbb{C} \, | \, | z-a_{i i} | \leq R_{i}\right\},\,  \text{where} \; R_{i}=\sum_{j \neq i}\, \left|a_{i j}\right| \; \text{and } \, a_{i j} \; \text{denote the entries of }A.  \\
 \end{equation}
 
 Corollary: The eigenvalues of A must also lie within the Gershgorin discs $C_j$ corresponding to the columns of A. \\
@@ -221,7 +284,7 @@ Corollary: The eigenvalues of A must also lie within the Gershgorin discs $C_j$ 
 
 \end{lemma}
 
-\begin{lemma}
+\begin{lemma}\label{lma:cond}
 The eigenvalues $\lambda_k$ of $AM$ are clustered at 1 and lie inside a circle of radius $\sqrt{p} \varepsilon$
 \end{lemma}
 
@@ -230,9 +293,12 @@ The eigenvalues $\lambda_k$ of $AM$ are clustered at 1 and lie inside a circle o
 Let $Q R Q^{T}$ be a Schur decomposition of $A M-I$. Then:
 
 \begin{equation}
-\sum_{k=1}^{n}\left|1-\lambda_{k}\right|^{2}=\|\operatorname{diag}(R)\|_{2}^{2} \leq\|R\|_{F}^{2}=\|A M-I\|_{F}^{2} \leq n \varepsilon^{2}
+\sum_{k=1}^{n}\left|1-\lambda_{k}\right|^{2} \overset{(b)}{=} \|\operatorname{diag}(R)\|_{2}^{2} \leq\|R\|_{F}^{2} \overset{(c)}{=} \|A M-I\|_{F}^{2} \leq n \varepsilon^{2}
 \end{equation}
+The first equality labeled (b) holds as $R$ and $ A M -I$ are similar matrices and thus have same eigenvalues. Note $R$ is an upper triangular matrix and contains eigenvalues on its diagonal.
+Further, (c) follows from the orthogonal invariance of the Frobenius norm and the proof of which can be found in Section \ref{sec:ortho} of the Appendix. \\
 
+Overall, we have:
 \begin{equation}
 \frac{1}{n} \sum_{k=1}^{n}\left|1-\lambda_{k}\right|^{2} \leq \varepsilon^{2}
 \end{equation}
@@ -242,7 +308,7 @@ This implies that the eigenvalues are clustered around 1. The part about them ly
 \left|\lambda_{k} - 1 \right| = \left|\lambda_{k} - \dk  + \dk - 1 \right| \leq \left|\lambda_{k} - \dk \right|  + \left|\dk - 1 \right| %\eq = \left|\lambda_{k} - \dk \right|  + \left|\tilde{g}_{kk}\right|
 \end{equation}
 
-Applying corollary of Lemma 2, i.e. in particular using the Gershgorin's disc $C_k$ corresponding to column $k$, we obtain:
+Applying corollary of Lemma \ref{lma:gersh}, i.e. in particular using the Gershgorin's disc $C_k$ corresponding to column $k$, we obtain:
 
 \begin{equation}\label{gers3}
 \left|\lambda_{k} - \dk \right| \leq \sum_{j \neq k}\, \left|g_{j k}\right|
@@ -254,7 +320,7 @@ Since $ \dktil = \dk - 1 $ and $\tilde{g}_{j k} = g_{j k}$ (for $j\neq k$), from
 \left|\lambda_{k} - 1 \right| \leq \sum_{j \neq k}\, \left|\tilde{g}_{j k}\right| + \left|\dktil\right| = \sum_{j }\, \left|\tilde{g}_{j k}\right| = \|A m_k -e_k\|_{1} \overset{\eqref{l1matrix}}{\leq} \|A M-I\|_{1}
 \end{equation}
 
-Thus from the above equation \eqref{gers4} and equation \eqref{lem1c} in lemma 1, we conclude that eigenvalues of the matrix $A M$ satisfy $ \left|\lambda_{k} - 1 \right| \leq \sqrt{p} \varepsilon$ and hence lie inside the required circle.
+Thus from the above equation \eqref{gers4} and equation \eqref{lem1c} in Lemma \ref{lma:norms}, we conclude that eigenvalues of the matrix $A M$ satisfy $ \left|\lambda_{k} - 1 \right| \leq \sqrt{p} \varepsilon$ and hence lie inside the required circle.
 \end{proof}
 
 
