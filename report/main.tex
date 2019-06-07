@@ -77,12 +77,13 @@
 \begin{document}
 	\maketitle
 	%\textbf{Disclaimer: } This project follows closely a project given in a different class covering convex optimization.
+	\begin{abstract}
 	
-	\section{Abstract}
 	
-	In this project, the aim is to construct a sparse preconditioner M for a given sparse matrix A. More specifically, we look for a right preconditioner M such that $\|I-A M\|_{F}$ is minimized. \\
-	One of the most successful general-purpose methods for achieving this tasks is SPAI by Grote and Huckle \cite{grote}. We will derive their algorithm along with a theorem 
-	
+	The objective is to construct a sparse approximate preconditioner M for a given sparse matrix A. More specifically, we look for a right preconditioner M such that $\|I-A M\|_{F}$ is minimized. 
+	We derive one of the most successful general-purpose methods for achieving this tasks is SPAI by Grote and Huckle \cite{grote} and provide a detailed proof of their key theorem. Further, we perform empirical experiments and reproduce the results in their paper. Also, we verify the performance of the preconditioners when used together with a linear system solver (like BICGSTAB). Lastly, we discuss another variant of sparse approximate inverse (MR) and illustrate it numerically on matrices arising in various applications.
+
+\end{abstract}
 
 	\newpage
 	
@@ -143,117 +144,107 @@
 %	
 %	\newpage
 	
-\section{SPAI}
+\section{SParse Approximate Inverse (SPAI)}
 
-The goal is to efficiently find a sparse inverse of $A$, the SPAI algorithm \cite{grote} does so by minimizing the Frobenious norm as it is more tractable and it also leads to inherent parallelism given that the columns of $M$ are independent of one another.
+\paragraph{Problem description.} The aim of SPAI \cite{grote} is to find a parallel preconditioner for the solution of linear system of equations. This is achieved by explicitly finding a sparse approximate inverse of $A$, which is later applied as a preconditioner for an iterative method like BICGSTAB or GMRES. The SPAI algorithm  does so by minimizing the Frobenius norm since this choice leads to inherent parallelism as the columns of  $M$ are independent of one another (see equation \eqref{eq:frob}) and is more tractable in comparison to minimizing the 1-norm or 2-norm.
 
-\begin{equation}
-\|A M-I\|_{F}^{2}=\sum_{k=1}^{n}\left\|(A M-I) e_{k}\right\|_{2}^{2}
+\begin{equation}\label{eq:frob}
+\|A M-I\|_{F}^{2}=\sum_{k=1}^{n}\left\|(A M-I) e_{k}\right\|_{2}^{2}, 
 \end{equation}
 
-Hence, it suffices to solve the following problem independently for each $k$
+where $n$ is the number of columns of $M$ and $e_k$ denotes the $k^{\text{th}}$ canonical basis vector. \\
+
+Thus, it amounts to solving these $n$ independent least squares problems for each $k$
 
 
-\begin{equation}
+\begin{equation}\label{eq:indp}
 \min _{m_{k}}\left\|A m_{k}-e_{k}\right\|_{2}, \quad k=1, \ldots, n
 \end{equation}
 
-SPAI is an iterative method as we will see; We will choose a starting $M$, for example $M = I$ (Where $I$ is the identity matrix). We then iteratively improve the columns while trying to preserve the sparsity of $M$. 
+We start with an initial sparsity pattern for $M$, like diagonal (for example $M = I$, where $I$ is the identity matrix). Then we seek to iteratively improve the columns, while trying to maintain the sparsity of $M$. 
 
-Following the convention of the original paper, we define the following objects. 
-
+\paragraph{Notation.}
 \begin{itemize}
-	\item Let \(\mathcal{J}\) be the set of indices \(j\) such that \(m_{k}(j) \neq 0\) 
-	\item We denote the reduced vector of unknowns \(m_{k}(\mathcal{J})\) by \(\hat{m}_{k}\)
+	\item Let \(\mathcal{J}\) be the set of indices \(j\) such that \(m_{k}(j) \neq 0\).
+	\item The reduced vector of unknowns \(m_{k}(\mathcal{J})\) is denoted by \(\hat{m}_{k}\).
 	\item Let \(\mathcal{I}\) be the set of
-	indices \(i\) such that \(A(i, \mathcal{J})\) is not identically zero
-	\item Denote \(A(\mathcal{I}, \mathcal{J})\) by \(\hat{A}\), the resulting submatrix
-	\item Define \(\hat{e}_{k}=e_{k}(\mathcal{I}) .\)
-	\item Set \(n_{1}=|\mathcal{I}|\) and \(n_{2}=|\mathcal{J}|,\)
+	indices \(i\) such that the row \(A(i, \mathcal{J})\) is not equal to zero.
+	\item The resulting submatrix \(A(\mathcal{I}, \mathcal{J})\) is then denoted as \(\hat{A}\). Correspondinly, define \(\hat{e}_{k}=e_{k}(\mathcal{I}).\)
+	\item Let \(n_{1}=|\mathcal{I}|\) and \(n_{2}=|\mathcal{J}|\).
 	
 \end{itemize}
 
-Based on these definitions, we can now solve the equivalent -- much smaller -- problem 
+Now, solving equation \eqref{eq:indp} is equivalent to the following problems of much smaller size as compared to original problem:
 
 \begin{equation}
-\min _{\hat{m}_{k}}\left\|\hat{A} \hat{m}_{k}-\hat{e}_{k}\right\|_{2}
+\min _{\hat{m}_{k}}\left\|\hat{A} \hat{m}_{k}-\hat{e}_{k}\right\|_{2}.
+\end{equation}
+
+We solve this reduced least squares problem by QR decomposition, i.e., 
+\begin{equation}
+\hat{A}=Q\left(\begin{array}{l}{R} \\ {0}\end{array}\right),
+\end{equation}
+
+where $Q \in \mathbb{R}^{n_{1} \times n_{1}}$ is an orthogonal matrix and \(R\) is a nonsingular upper triangular matrix  $\in \mathbb{R}^{n_{2} \times n_{2}}$. Let \(\hat{c}=Q^{T} \hat{e}_{k},\) then the solution of the least squares problem is,
+
+\begin{equation}
+\hat{m}_{k}=R^{-1} \hat{c}\left(1 : n_{2}\right).
 \end{equation}
 
 
-
-\begin{equation}
-\hat{A}=Q\left(\begin{array}{l}{R} \\ {0}\end{array}\right)
-\end{equation}
-
-Where \(R\) is a nonsingular upper triangular \(n_{2} \times n_{2}\) matrix that we get from the QR decomposition. If we let \(\hat{c}=Q^{T} \hat{e}_{k},\) the
-solution of the least squares problem is
-
-\begin{equation}
-\hat{m}_{k}=R^{-1} \hat{c}\left(1 : n_{2}\right)
-\end{equation}
+After solving this least square problem for every column, we get an approximate inverse. Next,we augment the sparsity structure to improve our current solution. \\
 
 
-We solve this least square problem for every column to get an approximate inverse. The next step is to augment the sparsity structure to improve our previous solution.
+In particular, we add indices that result in the best reduction in error,  \(\left\|A m_{k}-e_{k}\right\|_{2}\). Let us denote the residual as,
 
-
-A natural choice is to add indices that will yield the best reduction in error.
-In particular, for each column we want to find new indices to further reduce the error \(\left\|A m_{k}-e_{k}\right\|_{2}\).
-
-
-The residual that which to reduce is the following
 \begin{equation}
 r=A( ., \mathcal{J}) \hat{m}_{k}-e_{k}
 \end{equation}
 
 
-If $r = 0$, then we are done, $m_{k}$ is exactly the $k_{th}$ column of $A^{-1}$. Let us thus assume $r \neq 0$. 
-
-
-Let $\mathcal{L}$ be the indices in $r$ s.t. $r(i) \neq 0$. For every $ \ell \in \mathcal{L} $ we look at all nonzero elements of $A(\ell,.)$ that are not in $\mathcal{J}$ yet. We denote the collection these points as \(\mathcal{N}_{\ell}\). By taking the union we have now at our disposal a set of potential candidates to add to $\mathcal{J}$.
+If $r = 0$, then we have exactly the $k_{th}$ column of $A^{-1}$. So  assume $r \neq 0$ and let $\mathcal{L}$ be the set of indices $\ell$ s.t. $r(\ell) \neq 0$. For every $ \ell \in \mathcal{L} $, consider \(\mathcal{N}_{\ell}\) indicating the nonzero elements of $A(\ell,.)$ which are not in $\mathcal{J}$ yet. Thus, we now have at our disposal a set of potential candidates ($\tilde{\mathcal{J}}$) to add to $\mathcal{J}$.
 
 
 \begin{equation}
 \tilde{\mathcal{J}}=\bigcup_{\ell \in \mathcal{L}} \mathcal{N}_{\ell}
 \end{equation}
 
-To find the best candidates for every \(j \in \tilde{\mathcal{J}}\) we compute the following 1-D minimization problem. I.e. minimize the residual based based on updating at index $j$.
+In order to find the best candidates, for every \(j \in \tilde{\mathcal{J}}\) we compute the following one dimensional minimization problem, that minimizes the residual based on adding index $j$.
 
-\begin{equation}
+\begin{equation}\label{eq:ls}
 \min _{\mu_{j}}\left\|r+\mu_{j} A e_{j}\right\|_{2}
 \end{equation}
 
-To find the optimal step, we differentiate and set the derivative to 0. 
+%Essentially, $\mu_j$ plays the role of the potential entry of $\hat{m)_k$ which was zero before. 
+The solution to \eqref{eq:ls} can be found by taking the derivative (of the square) and setting it to 0, 
 
 \begin{equation}
 \begin{aligned}
-\frac{\partial \left\|r+\mu_{j} A e_{j}\right\|_{2}}{\partial \mu_{j}} 
-& = 2r^{T} A e_{j} + 2\mu_{j}\|A e_{j}\|_{2}^{2}\\
+\frac{\partial \left\|r+\mu_{j} A e_{j}\right\|_{2}^2}{\partial \mu_{j}} 
+& = 2r^{T} A e_{j} + 2\mu_{j}\|A e_{j}\|_{2}^{2}.
 \end{aligned}
 \end{equation}
 
-Setting the derivative to $0$ yields
+Thus, we obtain: 
 
-\begin{equation}
+\begin{equation}\label{eq:muj}
 \mu_{j}=-\frac{r^{T} A e_{j}}{\left\|A e_{j}\right\|_{2}^{2}}
 \end{equation}
 
-For every such $j$ we also compute the new residual norm (i.e. of $r+\mu_{j} A e_{j}$), which we do based on the optimal step that we just found. This yields
+Hence, we compute the new residual for every such $j$ (i.e.  $\rho_j = r+\mu_{j} A e_{j}$), based on the optimal value found above in equation \eqref{eq:muj}. Further, 
 
 \begin{equation}
-\rho_{j}^{2}=\|r\|_{2}^{2}-\frac{\left(r^{T} A e_{j}\right)^{2}}{\left\|A e_{j}\right\|_{2}^{2}}
+\rho_{j}^{2}=\|r\|_{2}^{2}-\frac{\left(r^{T} A e_{j}\right)^{2}}{\left\|A e_{j}\right\|_{2}^{2}}.
 \end{equation}
 
-Finally, note that there must exist at least one $j$ s.t. \(r^{T} A e_{j} \neq 0\) and that yields a better residual.
-
-To see why observe the following, if they are all zero then the following happens
+Now, there is at least one index $j \in \tilde{\mathcal{J}}$ s.t. \(r^{T} A e_{j} \neq 0\), which will lead to a smaller residual. Otherwise, we will have, 
 
 \begin{equation}
 0=r(\mathcal{L})^{T} A(\mathcal{L}, \tilde{\mathcal{J}})
 \end{equation}
 
-\,
 
-Since \(A(\mathcal{L}, .)\) has full rank this implies that \(r(\mathcal{L})\), which would be a contradiction.
+This would imply that \(r(\mathcal{L})\) is zero, as \(A(\mathcal{L}, .)\) has full rank, which would be a contradiction to our assumption that $r \neq 0$. Next, we choose $s$ most profitable indices (i.e., with smallest $\rho_j$) and finally repeat this procedure until convergence is attained ($\|r\|_{2} \leq \varepsilon$). 
 
 \newpage
 	
@@ -400,6 +391,8 @@ Thus we have the bound on the condition number of the matrix $AM$ as follows:
 Finally, applying Lemma \ref{lma:cond} to the matrix $ A M M^{T} A^{T} $ instead of $ A M$ we conclude that the singular values are indeed clustered at 1 and lie inside the interval \([\sqrt{1-\delta}, \sqrt{1+\delta}]\).
 \end{proof}
 
+\newpage
+
 \begin{section}{MR algorithm}
 	
 	Chow and Saad \cite{chow} also propose an algorithm based on minimal residual iterations (aka MR) to find a sparse approximate inverse via minimizing the Frobenius norm.\\
@@ -446,7 +439,7 @@ Under the update rule $\hat{m}_{j} :=m_{j}+\alpha_{j} r_{j}$, 	the optimal step 
 	\end{aligned}
 	\end{equation}
 	
-	By setting the derivative to $0$ we find that $\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$.
+	By setting the derivative to $0$ we find that $\alpha = \frac{\langle\,r,Ar\rangle}{\|Ar\|_{2}^{2}}$\footnote{This is a point of minima as the second derivative is clearly positive.}.
 \end{proof}	
 
 	
@@ -456,7 +449,7 @@ Under the update rule $\hat{m}_{j} :=m_{j}+\alpha_{j} r_{j}$, 	the optimal step 
 	
 
 	\begin{equation}\label{eq:rho}
-	\rho_{i j}=-2 m_{i j}\left(e_{i}, A^{T} r_{j}\right)+m_{i j}^{2}.
+	\rho_{i j}=-2 m_{i j}\langle e_{i}, A^{T} r_{j}\rangle+m_{i j}^{2}.
 	\end{equation}
 
 	%Here, the $\rho_{i j}$ measures the amount of reduction in the residual by considering entry $i$. We then keep the $\text{lfil}$ entries which result in the maximum decrease.
@@ -465,7 +458,7 @@ The reasoning for having such a criteria is based on the following equation \eqr
 Consider that $\left\|\hat{r}_{j}\right\|_{2}^{2}$ denotes the residual of a perturbed $\hat{m}_{j} = m_j + d$, where $d = m_{ij} e_j$.
 
 \begin{equation}\label{eq:pert}
-\left\|\hat{r}_{j}\right\|_{2}^{2}-\left\|r_{j}\right\|_{2}^{2}= \rho_{i j} = -2 m_{i j}\left(e_{i}, A^{T} r_{j}\right)+m_{i j}^{2}
+\left\|\hat{r}_{j}\right\|_{2}^{2}-\left\|r_{j}\right\|_{2}^{2}= \rho_{i j} = -2 m_{i j}\langle e_{i}, A^{T} r_{j}\rangle +m_{i j}^{2}
 \end{equation}
 
 This intuitively means that $\rho_{i j}$ measures the amount of reduction in the residual by considering entry $i$. We then keep the $\text{lfil}$ entries which result in the maximum decrease.
